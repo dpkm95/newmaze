@@ -31,6 +31,15 @@ public class ClassicActivity extends Activity{
 		
 		drawView = new ClassicMode(this,width, height, unit, x, y);
 		drawView.setBackgroundColor(Color.WHITE);
-		setContentView(drawView);
+		setContentView(drawView);	
+		//drawView.clockedUpdate();
+	}
+	
+	public void force_invalidate(){
+		drawView.invalidate();
+	}
+	
+	public void startClock(){
+		drawView.clockedUpdate();
 	}
 }

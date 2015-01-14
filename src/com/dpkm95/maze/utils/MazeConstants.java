@@ -8,16 +8,19 @@ public class MazeConstants {
 	public static boolean TONE=true;
 	public static boolean VIBRATION = true;
 	public static boolean RESUMABLE = false;
-	// 3:4 ratio maintained above
 	public static final int QUIT_MAZE = 0;
-	public static final int EVENT_CRASH = 1;
-	public static final int EVENT_WIN = 2;
-	public static final int EVENT_LOSS = 3;
+	public static final int EVENT_CRASH = 2;
+	public static final int EVENT_WIN = 3;
+	public static final int EVENT_LOSS = 1;
 	public static final  int EVENT_POSITION_UPDATE = 4;
+	public final static int STATE_PLAY = 1;
+	public final static int STATE_CRASH = 2;
+	public final static int STATE_WIN = 3;
+	public final static int STATE_LOSS = 4;
 
 
 	public static class PositionUpdates {
-		public final static String KEY_X_FRACTION = "xfraction";
-		public final static String KEY_Y_FRACTION = "yfraction";
+		public final static String KEY_X = "xfraction";
+		public final static String KEY_Y = "yfraction";
 	}
 }

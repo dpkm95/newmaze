@@ -256,9 +256,9 @@ public class Archiver {
 	}
 
 	public static void save_game_state(Context m_context, ClassicActivity root,
-			int[][] maze, int dx, int dy, Stack keys, int key_count,
-			int key_score, int lives, float ballX, float ballY, float teleX,
-			float teleY, boolean teleport, int life_number) throws IOException {
+			int[][] maze, int px, int py, int dx, int dy, Stack keys,
+			int key_count, int key_score, int lives, int life_number,
+			int teleX, int teleY, boolean teleport) throws IOException {
 		FileOutputStream fos = m_context.openFileOutput("o_maze",
 				Context.MODE_PRIVATE);
 		ObjectOutputStream os = new ObjectOutputStream(fos);
@@ -280,14 +280,14 @@ public class Archiver {
 		try {
 			FileOutputStream fOut = root.openFileOutput("key_data",
 					Context.MODE_PRIVATE);
-			String key = Integer.toString(dx) + "," + Integer.toString(dy)
+			String key = Integer.toString(px) + "," + Integer.toString(py)
+					+ "," + Integer.toString(dx) + "," + Integer.toString(dy)
 					+ "," + Integer.toString(key_count) + ","
 					+ Integer.toString(key_score) + ","
-					+ Integer.toString(lives) + "," + Float.toString(ballX)
-					+ "," + Float.toString(ballY) + "," + Float.toString(teleX)
-					+ "," + Float.toString(teleY) + ","
-					+ Boolean.toString(teleport) + ","
-					+ Integer.toString(life_number);
+					+ Integer.toString(lives) + ","
+					+ Integer.toString(life_number) + ","
+					+ Integer.toString(teleX) + "," + Integer.toString(teleY)
+					+ "," + Boolean.toString(teleport);
 			fOut.write(key.getBytes());
 			fOut.close();
 		} catch (Exception e) {
@@ -297,15 +297,16 @@ public class Archiver {
 	}
 
 	public static void save_game_state(Context m_context,
-			ClassicResumeActivity root, int[][] maze, int dx, int dy,
-			Stack keys, int key_count, int key_score, int lives, float ballX,
-			float ballY, float teleX, float teleY, boolean teleport,
-			int life_number) throws IOException {
+			ClassicResumeActivity root, int[][] maze, int px, int py, int dx,
+			int dy, Stack keys, int key_count, int key_score, int lives,
+			int life_number, int teleX, int teleY, boolean teleport)
+			throws IOException {
 		FileOutputStream fos = m_context.openFileOutput("o_maze",
 				Context.MODE_PRIVATE);
 		ObjectOutputStream os = new ObjectOutputStream(fos);
 		os.writeObject(maze);
 		os.close();
+
 		int s = keys.getSize();
 		int[][] k = new int[s][2];
 		for (int i = 0; i < s; ++i) {
@@ -313,22 +314,22 @@ public class Archiver {
 			k[i][1] = keys.topY();
 			keys.pop();
 		}
-		os.close();
 		fos = m_context.openFileOutput("o_keys", Context.MODE_PRIVATE);
 		os = new ObjectOutputStream(fos);
 		os.writeObject(k);
 		os.close();
+
 		try {
 			FileOutputStream fOut = root.openFileOutput("key_data",
 					Context.MODE_PRIVATE);
-			String key = Integer.toString(dx) + "," + Integer.toString(dy)
+			String key = Integer.toString(px) + "," + Integer.toString(py)
+					+ "," + Integer.toString(dx) + "," + Integer.toString(dy)
 					+ "," + Integer.toString(key_count) + ","
 					+ Integer.toString(key_score) + ","
-					+ Integer.toString(lives) + "," + Float.toString(ballX)
-					+ "," + Float.toString(ballY) + "," + Float.toString(teleX)
-					+ "," + Float.toString(teleY) + ","
-					+ Boolean.toString(teleport) + ","
-					+ Integer.toString(life_number);
+					+ Integer.toString(lives) + ","
+					+ Integer.toString(life_number) + ","
+					+ Integer.toString(teleX) + "," + Integer.toString(teleY)
+					+ "," + Boolean.toString(teleport);
 			fOut.write(key.getBytes());
 			fOut.close();
 		} catch (Exception e) {
@@ -363,12 +364,12 @@ public class Archiver {
 			o[4] = (int) Integer.parseInt(key.get(2));
 			o[5] = (int) Integer.parseInt(key.get(3));
 			o[6] = (int) Integer.parseInt(key.get(4));
-			o[7] = (float) Float.parseFloat(key.get(5));
-			o[8] = (float) Float.parseFloat(key.get(6));
-			o[9] = (float) Float.parseFloat(key.get(7));
-			o[10] = (float) Float.parseFloat(key.get(8));
-			o[11] = (boolean) Boolean.parseBoolean(key.get(9));
-			o[12] = (int) Integer.parseInt((key.get(10)));
+			o[7] = (int) Float.parseFloat(key.get(5));
+			o[8] = (int) Float.parseFloat(key.get(6));
+			o[9] = (int) Float.parseFloat(key.get(7));
+			o[10] = (int) Float.parseFloat(key.get(8));
+			o[11] = (int) Integer.parseInt((key.get(9)));
+			o[12] = (boolean) Boolean.parseBoolean(key.get(10));
 			fin.close();
 		} catch (Exception e) {
 

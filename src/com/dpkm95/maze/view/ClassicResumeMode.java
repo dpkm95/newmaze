@@ -7,9 +7,12 @@ import java.util.TimerTask;
 import android.annotation.SuppressLint;
 import android.content.Context;
 
+import com.dpkm95.maze.R;
 import com.dpkm95.maze.activity.ClassicResumeActivity;
 import com.dpkm95.maze.utils.*;
 
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -26,43 +29,31 @@ import com.dpkm95.maze.utils.MazeGenerator;
 
 @SuppressLint({ "DrawAllocation", "ClickableViewAccessibility" })
 public class ClassicResumeMode extends View {
-	public final static int STATE_PLAY = 1;
-	public final static int STATE_CRASH = 2;
-	public final static int STATE_WIN = 3;
-
 	private SparseArray<PointF> mActivePointers = new SparseArray<PointF>();
-	Paint paint = new Paint();
-	float W, H;
-	static float ballX, ballY;
-	int x, y;
-	int draw = STATE_PLAY;
-	float mazeX, mazeY, mazeXf, mazeYf;
-	float unit, tradius;
-	int dirX, dirY;
-	MazeGenerator mg;
-	static int[][] maze;
-	LongestPathFinder lpf;
-	static Stack retPath, keys;
-	static int destX, destY;
-	static float destfX, destfY;
-	float iniX, iniY;
-	static float rX, rY, retDestX, retDestY;
-	static int key_count = 1;
-	static int key_score = 0;
-	int life_score = 1;
-	int life_number = 0;
-	static float restoreX = 0, restoreY = 0;
-	static float teleX, teleY;
-	boolean teleport = false,archive = true;
-	int delay = 20;
-
-	ClassicResumeActivity master = new ClassicResumeActivity();
-	ClassicResumeActivity root;
-	Context m_context;
-	Vibrator vibrator;
-	MediaPlayer mp_teleport, mp_key, mp_transition, mp_end, mp_bump;
-	long[] pattern_crash = { 50, 50, 50 };
-	long[] pattern_win = { 50, 500, 50 };
+	private Paint paint = new Paint();
+	private float W, H;
+	private float ballX,ballY,ballXf, ballYf;
+	private int x, y;
+	private int state = MazeConstants.STATE_PLAY;
+	private float mazeX, mazeY, mazeXf, mazeYf, offset;
+	private int lcl, bcl;
+	private float unit;
+	private MazeGenerator mg;
+	private int[][] maze;
+	private LongestPathFinder lpf;
+	private Stack retPath, keys;
+	private int destX, destY;
+	private int key_count,life_number;
+	private int restoreX, restoreY, teleX, teleY;
+	private boolean teleport, archive;
+	private Bitmap arrow;
+	private Pawn player;
+	private ClassicResumeActivity root;
+	private Context m_context;
+	private Vibrator vibrator;
+	private MediaPlayer mp_teleport, mp_key, mp_transition, mp_end, mp_bump;
+	private long[] pattern_crash = { 50, 50, 50 };
+	private long[] pattern_win = { 50, 500, 50 };
 
 	// AchievementsActivity archiver = new AchievementsActivity();
 
@@ -83,8 +74,10 @@ public class ClassicResumeMode extends View {
 		mp_key = MediaPlayer.create(context, com.dpkm95.maze.R.raw.key);
 		mp_end = MediaPlayer.create(context, com.dpkm95.maze.R.raw.end);
 		mp_transition = MediaPlayer.create(context,
-				com.dpkm95.maze.R.raw.transit);
+				com.dpkm95.maze.R.raw.transit);		
 		mp_bump = MediaPlayer.create(context, com.dpkm95.maze.R.raw.bump);
+		arrow = BitmapTransformer.getResizedBitmap(BitmapFactory.decodeResource(getResources(),
+				R.drawable.arrow), (int)(4*unit) , (int)(4*unit));
 
 		if (MazeConstants.TONE)
 			mp_transition.start();
@@ -97,11 +90,15 @@ public class ClassicResumeMode extends View {
 		mazeY = 2 * unit;
 		mazeXf = mazeX + unit * 5 * x + unit;
 		mazeYf = mazeY + unit * 5 * y + unit;
-		teleX = iniX = ballX = mazeX + 3 * unit;
-		teleY = iniY = ballY = mazeY + 3 * unit;
-		destfX = mazeX + 5 * unit * destX + 3 * unit;
-		destfY = mazeY + 5 * (unit + 2) * destY + 3 * unit;
-		tradius = unit;
+		offset = (mazeYf - mazeY) / 3;
+		player = new Pawn(0,0);
+		player.fx = teleX = 0;
+		player.fy = teleY = 0;
+		key_count = 1;
+		player.score = 0;
+		player.lives = 1;
+		life_number = 0;
+				
 		mg = new MazeGenerator(x, y);
 		keys = new Stack();
 		try {
@@ -110,54 +107,48 @@ public class ClassicResumeMode extends View {
 			int[][] k = (int[][]) o[1];
 			for (int i = 0; i < k.length; ++i)
 				keys.insert(k[i][0], k[i][1]);
-			destX = (int) o[2];
-			destY = (int) o[3];
-			key_count = (int) o[4];
-			key_score = (int) o[5];
-			life_score = (int) o[6];
-			ballX = (float) o[7];
-			ballY = (float) o[8];
-			teleX = (float) o[9];
-			teleY = (float) o[10];
-			teleport = (boolean) o[11];
-			life_number = (int) o[12];
+			player.fx = player.x = (int) o[2];
+			player.fy = player.y = (int) o[3];
+			destX    = (int) o[4];
+			destY    = (int) o[5];
+			key_count = (int) o[6];
+			player.score = (int) o[7];
+			player.lives = (int) o[8];
+			life_number = (int) o[9];
+			teleX = (int) o[10];
+			teleY = (int) o[11];
+			teleport = (boolean) o[12];
 
 		} catch (ClassNotFoundException | IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-
-		rX = retDestX = destX;
-		rY = retDestY = destY;
 	}
 
 	// super class method called when invalidate(), it renders the graphics
 	@Override
 	public void onDraw(Canvas canvas) {
-		switch (draw) {
-		case STATE_PLAY:
+		switch (state) {
+		case MazeConstants.STATE_PLAY:
 			paintMaze(canvas);
-			paintBackgroundColor(canvas);
-
+			paintBackground(canvas);
 			paintControlLine(canvas);
-			paintPointers(canvas);
-
 			paintDestination(canvas);
 			paintKeys(canvas);
-
-			paintBall(canvas);
+			if (state != MazeConstants.STATE_CRASH)
+				paintPlayer(canvas);
 			break;
-		case STATE_CRASH:
+		case MazeConstants.STATE_CRASH:
 			if (MazeConstants.VIBRATION)
 				vibrator.vibrate(pattern_crash, -1);
 			paintLoading(canvas);
-			if (life_score != 1) {
+			if (player.lives != 1) {
 				if (MazeConstants.TONE)
 					mp_end.start();
 				paintCrash(canvas);
 				MazeConstants.RESUMABLE=false;
 				if (archive) {
-					Archiver.save_classic_score(root, key_score);
+					Archiver.save_classic_score(root, player.score);
 					archive = false;
 				}
 				new Timer().schedule(new TimerTask() {
@@ -169,11 +160,11 @@ public class ClassicResumeMode extends View {
 			} else {
 				if (MazeConstants.TONE)
 					mp_bump.start();
-				life_score = -1 * life_number++;
+				player.lives = -1 * life_number++;
 				restoreBall();
 			}
 			break;
-		case STATE_WIN:
+		case MazeConstants.STATE_WIN:
 			if (MazeConstants.TONE)
 				mp_transition.start();
 			if (MazeConstants.VIBRATION)
@@ -186,20 +177,20 @@ public class ClassicResumeMode extends View {
 	public void onWindowFocusChanged(boolean hasFocus) {
 		super.onWindowFocusChanged(hasFocus);
 		if (!hasFocus)
-			Log.d("a there", Integer.toString(keys.getSize()));
 		try {
-			Stack k = new Stack();
-			k.copy(keys);
-			Archiver.save_game_state(m_context, root, maze, destX, destY, k,
-					key_count, key_score, life_score, ballX, ballY, teleX,
-					teleY, teleport, life_number);
+			Stack keys_copy = new Stack();
+			keys_copy.copy(keys);
+			Archiver.save_game_state(m_context, root, maze
+					,player.x, player.y,destX, destY
+					,keys_copy, key_count, player.score, player.lives, life_number
+					,teleX, teleY, teleport);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
 
-	public void paintMaze(Canvas canvas) {
+	private void paintMaze(Canvas canvas) {
 		paint.setColor(Color.rgb(0, 162, 232));
 		paint.setStrokeWidth(unit);
 		float px = mazeX, py = mazeY;
@@ -207,13 +198,10 @@ public class ClassicResumeMode extends View {
 			// print horizontal lines
 			for (int j = 0; j < x; j++) {
 				if ((maze[j][i] & 1) == 0) {
-					if (checkCollision(px, py, px + 5 * unit, py + unit))
-						draw = STATE_CRASH;
+					checkCollision(px, py, false);
 					canvas.drawRect(px, py, px + 5 * unit, py + unit, paint);
 					px += 5 * unit;
 				} else {
-					if (checkCollision(px, py, px + unit, py + unit))
-						draw = STATE_CRASH;
 					canvas.drawRect(px, py, px + unit, py + unit, paint);
 					px += 5 * unit;
 				}
@@ -223,35 +211,62 @@ public class ClassicResumeMode extends View {
 			// print vertical lines
 			for (int j = 0; j < x; j++) {
 				if ((maze[j][i] & 8) == 0) {
-					if (checkCollision(px, py, px + unit, py + 5 * unit))
-						draw = STATE_CRASH;
+					checkCollision(px, py, true);
 					canvas.drawRect(px, py, px + unit, py + 5 * unit, paint);
 					px += 5 * unit;
 				} else {
 					px += 5 * unit;
 				}
 			}
-			if (checkCollision(px, py, px + unit, py + 5 * unit))
-				draw = STATE_CRASH;
+			checkCollision(px, py, true);
 			canvas.drawRect(px, py, px + unit, py + 5 * unit, paint);
 			py += 5 * unit;
 			px = mazeX;
 		}
 		// print bottom line
-		if (checkCollision(px, py, px + 5 * x * unit + unit, py + unit))
-			draw = STATE_CRASH;
-		canvas.drawRect(px, py, px + 5 * x * unit + unit, py + unit, paint);
+		for (int i = 0; i < x; ++i) {
+			checkCollision(px + 5 * i * unit, py, false);
+			canvas.drawRect(px + 5 * i * unit, py, px + 5 * (i + 1) * unit, py
+					+ unit, paint);
+		}
+		canvas.drawRect(px + 5 * x * unit, py, px + 5 * x * unit + unit + unit,
+				py + unit, paint);
 	}
 
-	public boolean checkCollision(float px, float py, float pxf, float pyf) {
-		if (ballX > px - unit / 2 && ballX < pxf + unit / 2
-				&& ballY > py - unit / 2 && ballY < pyf + unit / 2)
-			return true;
-		return false;
-	}
+	private void checkCollision(float px, float py, boolean dir) {
+		ballX = mazeX + 5 * unit * player.x + 3 * unit;
+		ballY = mazeY + 5 * unit * player.y + 3 * unit;
+		ballXf = mazeX + 5 * unit * player.fx + 3 * unit;
+		ballYf = mazeY + 5 * unit * player.fy + 3 * unit;
 
+		if (dir) {
+			// move right
+			if (bcl == 3 && ballX < px && px < ballXf && py < ballY
+					&& ballY < py + 4 * unit) {
+				state = MazeConstants.STATE_CRASH;
+			}
+			// move left
+			if (bcl == 1 && ballXf < px + unit && px + unit < ballX
+					&& py < ballY && ballY < py + 4 * unit) {
+				state = MazeConstants.STATE_CRASH;
+			}
+		} else {
+			// move down
+			if (lcl == 3 && ballY < py && py < ballYf && px < ballX
+					&& ballX < px + 4 * unit) {
+				state = MazeConstants.STATE_CRASH;
+			}
+			// move up
+			if (lcl == 1 && ballYf < py + unit && py + unit < ballY
+					&& px < ballX && ballX < px + 4 * unit) {
+				state = MazeConstants.STATE_CRASH;
+			}
+		}
+		// invalidate();
+	}
+	
 	// paints the non-maze part of screen
-	private void paintBackgroundColor(Canvas canvas) {
+	private void paintBackground(Canvas canvas) {
 		paint.setColor(Color.rgb(0, 162, 232));
 		canvas.drawRect(0, 0, mazeX, H, paint);
 		canvas.drawRect(0, 0, W, mazeY, paint);
@@ -259,39 +274,70 @@ public class ClassicResumeMode extends View {
 		canvas.drawRect(mazeX, mazeYf, W, H, paint);
 		paint.setColor(Color.WHITE);
 		paint.setTextSize(3 * unit);
-		paint.setTypeface(Typeface.DEFAULT_BOLD);
-		canvas.drawText("Score:", W - 10 * unit, H / 4 - 4 * unit, paint);
-		canvas.drawText(Integer.toString(key_score), W - 7 * unit, H / 4, paint);
-		canvas.drawText("Lives:", W - 10 * unit, H / 2, paint);
-		canvas.drawText(Integer.toString(life_score), W - 7 * unit, H / 2 + 4
-				* unit, paint);
+		paint.setTypeface(Typeface.createFromAsset(root.getAssets(),
+				"fonts/gisha.ttf"));
+		canvas.drawText("Score:", mazeXf + (W - mazeXf) / 2
+				- (float) (4.5 * unit), H / 4 - 4 * unit, paint);
+		canvas.drawText(Integer.toString(player.score), mazeXf + (W - mazeXf) / 2
+				- (float) (1.5 * unit), H / 4, paint);
+		canvas.drawText("Lives:", mazeXf + (W - mazeXf) / 2
+				- (float) (4.5 * unit), H / 2, paint);
+		canvas.drawText(Integer.toString(player.lives), mazeXf + (W - mazeXf) / 2
+				- (float) (1.5 * unit), H / 2 + 4 * unit, paint);
 		// Teleport location
 		if (teleport) {
 			paint.setColor(Color.GRAY);
-			canvas.drawCircle(teleX, teleY, unit, paint);
+			canvas.drawCircle(mazeX + 5 * unit * teleX + 3 * unit, mazeY + 5
+					* unit * teleY + 3 * unit, unit, paint);
 		}
 	}
 
 	// paints line on which pointer is placed
 	private void paintControlLine(Canvas canvas) {
 		paint.setColor(Color.rgb(153, 217, 234));
+						
+		canvas.drawBitmap(arrow, mazeX - 5 * unit, mazeY, null);		
+		Bitmap down_arrow = BitmapTransformer.RotateBitmap(arrow,180);
+		canvas.drawBitmap(down_arrow, mazeX - 5 * unit, mazeYf-4*unit, null);
+		Bitmap left_arrow = BitmapTransformer.RotateBitmap(down_arrow,90);
+		canvas.drawBitmap(left_arrow, mazeXf-3*offset-unit, mazeYf + unit, null);
+		Bitmap right_arrow = BitmapTransformer.RotateBitmap(left_arrow, 180);
+		canvas.drawBitmap(right_arrow, mazeXf-4*unit, mazeYf + unit, null);
+		
 		paint.setStrokeWidth(unit);
-
-		// left control line
-		canvas.drawLine(mazeX - 3 * unit, mazeY + unit, mazeX - 3 * unit,
-				mazeYf - unit, paint);
-		// bottom control line
-		canvas.drawLine(mazeX + unit, mazeYf + 3 * unit, mazeXf - unit, mazeYf
-				+ 3 * unit, paint);
-	}
-
-	// paints the pointers which show position of player
-	private void paintPointers(Canvas canvas) {
-		paint.setColor(Color.GRAY);
-		// left control-line pointer
-		canvas.drawCircle(mazeX - 3 * unit, ballY, unit / 2, paint);
-		// bottom control-line pointer
-		canvas.drawCircle(ballX, mazeYf + 3 * unit, unit / 2, paint);
+		canvas.drawLine(mazeX - 3 * unit, mazeY + (int)(1.5*unit), mazeX - 3 * unit,
+				mazeYf - (int)(1.5*unit), paint);
+		canvas.drawLine(mazeXf - 3 * offset+(int)(0.5*unit), mazeYf + 3 * unit, mazeXf-(int)(1.5*unit),
+				mazeYf + 3 * unit, paint);
+		paint.setColor(Color.rgb(0, 162, 232));
+		switch (lcl) {
+		case 1:
+			
+			canvas.drawRect(mazeX - 5 * unit, mazeY, mazeX - unit,
+					mazeY + offset, paint);
+			break;
+		case 2:
+			canvas.drawRect(mazeX - 5 * unit, mazeY + offset, mazeX - unit,
+					mazeY + 2 * offset, paint);
+			break;
+		case 3:
+			canvas.drawRect(mazeX - 5 * unit, mazeY + 2 * offset, mazeX - unit, mazeYf, paint);
+			break;
+		}
+		switch (bcl) {
+		case 1:
+			canvas.drawRect(mazeXf - 3 * offset-unit, mazeYf + unit, mazeXf - 2
+					* offset, mazeYf + 5 * unit, paint);
+			break;
+		case 2:
+			canvas.drawRect(mazeXf - 2 * offset, mazeYf + unit, mazeXf
+					- offset, mazeYf + 5 * unit, paint);
+			break;
+		case 3:
+			canvas.drawRect(mazeXf - offset, mazeYf + unit, mazeXf,
+					mazeYf + 5 * unit, paint);
+			break;
+		}
 	}
 
 	private void paintDestination(Canvas canvas) {
@@ -304,7 +350,6 @@ public class ClassicResumeMode extends View {
 	private void paintKeys(Canvas canvas) {
 		keys = checkKeyStatus(keys);
 		Node key = keys.top();
-		// Log.d("blmost there--",);
 		paint.setColor(Color.rgb(255, 208, 47));
 		while (key != null) {
 			canvas.drawCircle(mazeX + 5 * unit * key.getX() + 3 * unit, mazeY
@@ -317,17 +362,14 @@ public class ClassicResumeMode extends View {
 	private Stack checkKeyStatus(Stack keys) {
 		Node key = keys.top();
 		while (key != null) {
-			if (ballX < mazeX + 5 * unit * key.getX() + 5 * unit
-					&& ballX > mazeX + 5 * unit * key.getX() + 1 * unit
-					&& ballY < mazeY + 5 * unit * key.getY() + 5 * unit
-					&& ballY > mazeY + 5 * unit * key.getY() + 1 * unit) {
+			if (player.x == key.getX() && player.y == key.getY()) {
 				--key_count;
 				if (MazeConstants.TONE)
 					mp_key.start();
-				if (life_score != 1)
-					++life_score;
+				if (player.lives != 1)
+					++player.lives;
 				else
-					++key_score;
+					++player.score;
 				restoreX = key.getX();
 				restoreY = key.getY();
 				if (key.getNext() == null) {
@@ -342,19 +384,18 @@ public class ClassicResumeMode extends View {
 		return keys;
 	}
 
-	private void paintBall(Canvas canvas) {
-		if (ballX < mazeX + 5 * unit * destX + 4 * unit
-				&& ballX > mazeX + 5 * unit * destX + 2 * unit
-				&& ballY < mazeY + 5 * unit * destY + 4 * unit
-				&& ballY > mazeY + 5 * unit * destY + 2 * unit
-				&& key_count == 0) {
-
+	private void paintPlayer(Canvas canvas) {
+		// reached end point
+		player.x = player.fx;
+		player.y = player.fy;
+		if (player.x == destX && player.y == destY && key_count == 0) {
 			restoreX = destX;
 			restoreY = destY;
-			draw = STATE_WIN;
+			state = MazeConstants.STATE_WIN;
 		}
 		paint.setColor(Color.GRAY);
-		canvas.drawCircle(ballX, ballY, unit, paint);
+		canvas.drawCircle(mazeX + 5 * unit * player.x + 3 * unit, mazeY + 5
+				* unit * player.y + 3 * unit, unit, paint);
 	}
 
 	private void paintLoading(Canvas canvas) {
@@ -368,9 +409,9 @@ public class ClassicResumeMode extends View {
 	}
 
 	private void restoreBall() {
-		draw = STATE_PLAY;
-		ballX = mazeX + 5 * unit * restoreX + 3 * unit;
-		ballY = mazeY + 5 * unit * restoreY + 3 * unit;
+		state = MazeConstants.STATE_PLAY;
+		player.fx = restoreX;
+		player.fy = restoreY;
 		invalidate();
 	}
 
@@ -388,7 +429,7 @@ public class ClassicResumeMode extends View {
 	}
 
 	private void nextMaze(Canvas canvas) {
-		draw = STATE_PLAY;
+		state = MazeConstants.STATE_PLAY;
 		paintLoading(canvas);
 		mg = new MazeGenerator(x, y);
 		maze = mg.getMaze();
@@ -400,21 +441,18 @@ public class ClassicResumeMode extends View {
 		key_count = keys.getSize();
 		destX = retPath.topX();
 		destY = retPath.topY();
-		rX = retDestX = destX;
-		rY = retDestY = destY;
-		teleX = ballX;
-		teleY = ballY;
+		teleX = player.x;
+		teleY = player.y;
+		invalidate();
 	}
 
-	@Override
 	public boolean onTouchEvent(MotionEvent event) {
 		int pointerIndex = event.getActionIndex();
 		int pointerId = event.getPointerId(pointerIndex);
 		int maskedAction = event.getActionMasked();
-		
 		switch (maskedAction) {
 		case MotionEvent.ACTION_DOWN:
-		case MotionEvent.ACTION_POINTER_DOWN: {
+		case MotionEvent.ACTION_POINTER_DOWN:
 			if (event.getX() > (ballX - 3 * unit)
 					&& event.getX() < (ballX + 3 * unit)
 					&& event.getY() > (ballY - 3 * unit)
@@ -423,59 +461,88 @@ public class ClassicResumeMode extends View {
 				if (teleport) {
 					if (MazeConstants.TONE)
 						mp_teleport.start();
-					teleX = ballX;
-					teleY = ballY;
+					teleX = player.fx;
+					teleY = player.fy;
 				} else {
 					if (MazeConstants.TONE)
 						mp_transition.start();
-					ballX = teleX;
-					ballY = teleY;
+					player.fx = teleX;
+					player.fy = teleY;
 				}
 				break;
 			}
 
-			if (event.getX() > ballX - 1.2 * unit
-					&& event.getX() < ballX + 1.2 * unit
-					|| event.getY() > ballY - 1.2 * unit
-					&& event.getY() < ballY + 1.2 * unit) {
-				if (event.getY() < mazeY
-						&& (event.getX() > mazeX && event.getX() < mazeXf))
-					ballX = event.getX();
-				if (event.getX() < mazeY
-						&& (event.getY() > mazeY && event.getY() < mazeYf))
-					ballY = event.getY();
-				PointF f = new PointF();
-				f.x = event.getX(pointerIndex);
-				f.y = event.getY(pointerIndex);
-				mActivePointers.put(pointerId, f);
-			}
-			break;
-		}
-		case MotionEvent.ACTION_MOVE: {
-			for (int size = event.getPointerCount(), i = 0; i < size; i++) {
-				PointF point = mActivePointers.get(event.getPointerId(i));
-				if (point != null) {
-					if (event.getX(i) > ballX - 1.2 * unit
-							&& event.getX(i) < ballX + 1.2 * unit)
-						ballX = event.getX(i);
-					if (event.getY(i) > ballY - 1.2 * unit
-							&& event.getY(i) < ballY + 1.2 * unit)
-						ballY = event.getY(i);
+			if (event.getX() < mazeX && event.getY() < mazeYf) {
+				if (mazeY < event.getY() && event.getY() < mazeY + offset) {
+					lcl = 1;
+					player.fy -= 1;
+				} else if (mazeY + offset < event.getY()
+						&& event.getY() < mazeY + 2 * offset) {
+					lcl = 2;
+				} else if (mazeY + 2 * offset < event.getY()
+						&& event.getY() < mazeYf) {
+					lcl = 3;
+					player.fy += 1;
+				}
+			} else if (event.getY() > mazeYf && event.getX() > mazeX) {
+				if (mazeXf - 3 * offset < event.getX()
+						&& event.getX() < mazeXf - 2 * offset) {
+					bcl = 1;
+					player.fx -= 1;
+				} else if (mazeXf - 2 * offset < event.getX()
+						&& event.getX() < mazeXf - offset) {
+					bcl = 2;
+				} else if (mazeXf - offset < event.getX()
+						&& event.getX() < mazeXf) {
+					bcl = 3;
+					player.fx += 1;
 				}
 			}
-
+			PointF f = new PointF();
+			f.x = event.getX(pointerIndex);
+			f.y = event.getY(pointerIndex);
+			mActivePointers.put(pointerId, f);
 			break;
-		}
+		case MotionEvent.ACTION_MOVE:
+			for (int size = event.getPointerCount(), i = 0; i < size; i++) {
+				//PointF point = mActivePointers.get(event.getPointerId(i));
+				if (event.getX(i) < mazeX && event.getY(i) < mazeYf) {
+					if (mazeY < event.getY(i) && event.getY(i) < mazeY + offset) {
+						Log.d("up", "");
+						lcl = 1;
+					} else if (mazeY + offset < event.getY(i)
+							&& event.getY(i) < mazeY + 2 * offset) {
+						lcl = 2;
+					} else if (mazeY + 2 * offset < event.getY(i)
+							&& event.getY(i) < mazeYf) {
+						Log.d("down", "");
+						lcl = 3;
+					}
+				} else if (event.getY(i) > mazeYf && event.getX(i) > mazeX) {
+					if (mazeXf - 3 * offset < event.getX(i)
+							&& event.getX(i) < mazeXf - 2 * offset) {
+						Log.d("left", "");
+						bcl = 1;
+					} else if (mazeXf - 2 * offset < event.getX(i)
+							&& event.getX(i) < mazeXf - offset) {
+						bcl = 2;
+					} else if (mazeXf - offset < event.getX(i)
+							&& event.getX(i) < mazeXf) {
+						Log.d("right", "");
+						bcl = 3;
+					}
+				}
+			}
+			break;
 		case MotionEvent.ACTION_UP:
 		case MotionEvent.ACTION_POINTER_UP:
-		case MotionEvent.ACTION_CANCEL: {
+		case MotionEvent.ACTION_CANCEL:
+			lcl = bcl = 0;
 			mActivePointers.remove(pointerId);
 			break;
 		}
-		}
-		
+
 		invalidate();
 		return true;
 	}
-
 }

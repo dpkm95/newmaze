@@ -18,7 +18,7 @@ import com.dpkm95.maze.bluetooth.BluetoothChatService;
 import com.dpkm95.maze.bluetooth.BluetoothEncoderDecoder;
 import com.dpkm95.maze.bluetooth.BluetoothMediator;
 import com.dpkm95.maze.utils.MazeConstants;
-import com.dpkm95.maze.view.ClassicModeView;
+import com.dpkm95.maze.view.DuelMode;
 import com.dpkm95.maze.R;
 
 /**
@@ -101,7 +101,7 @@ public class FlexibleMazeActivity extends Activity {
 
 	public static final String KEY_MAZE = "MAZE";
 	private int mIntMaze[][];
-	ClassicModeView mDrawView;
+	DuelMode mDrawView;
 	private OnClickListener endActivityOnClickListener = new OnClickListener() {
 		@Override
 		public void onClick(View v) {
@@ -112,8 +112,8 @@ public class FlexibleMazeActivity extends Activity {
 		@Override
 		public void handleMessage(Message msg) {
 			Bundle b = msg.getData();
-			float x = b.getFloat(MazeConstants.PositionUpdates.KEY_X_FRACTION);
-			float y = b.getFloat(MazeConstants.PositionUpdates.KEY_Y_FRACTION);
+			int x = b.getInt(MazeConstants.PositionUpdates.KEY_X);
+			int y = b.getInt(MazeConstants.PositionUpdates.KEY_Y);
 			// we don't care about EVENT_LOSS as opponent loss can only be
 			// caused by our win
 			switch (msg.what) {
@@ -152,7 +152,7 @@ public class FlexibleMazeActivity extends Activity {
 		Display display = getWindowManager().getDefaultDisplay();
 		Point size = new Point();
 		display.getSize(size);
-		mDrawView = new ClassicModeView(this, size.x, size.y, mIntMaze,
+		mDrawView = new DuelMode(this, size.x, size.y, mIntMaze,
 				mHandler);
 		mDrawView.setBackgroundColor(Color.WHITE);
 		mDrawView.setOnClickListener(endActivityOnClickListener);
@@ -178,8 +178,8 @@ public class FlexibleMazeActivity extends Activity {
 				break;
 			// no onOpponentLoss as his loss is determined only by your win
 			case MazeConstants.EVENT_POSITION_UPDATE:
-				updateOpponentPosition(Float.parseFloat(parts[1]),
-						Float.parseFloat(parts[2]));
+				updateOpponentPosition(Integer.parseInt(parts[1]),
+						Integer.parseInt(parts[2]));
 				break;
 			}
 		}catch(NumberFormatException e){
@@ -213,13 +213,13 @@ public class FlexibleMazeActivity extends Activity {
 		eventCommunicated = true;// to prevent us from sending another message
 									// back
 		Toast.makeText(this, "Victory!", Toast.LENGTH_LONG).show();
-		mDrawView.setDrawState(ClassicModeView.STATE_WIN);
+		mDrawView.setDrawState(MazeConstants.STATE_WIN);
 	}
 
 	public void onOpponentWin() {
 		eventCommunicated = true;// not necessary as STATE_LOSS has no callback
 									// mechanism
-		mDrawView.setDrawState(ClassicModeView.STATE_LOSS);
+		mDrawView.setDrawState(MazeConstants.STATE_WIN);
 	}
 
 	// on<Event> functions below are expected to be called only by mDrawView
@@ -239,14 +239,19 @@ public class FlexibleMazeActivity extends Activity {
 		}
 	}
 
-	public void onOwnPositionUpdate(float xFract, float yFract) {
-		sendMessage(MazeConstants.EVENT_POSITION_UPDATE + ":" + xFract + ":"
-				+ yFract);
-		Log.d("ownPos", "o" + xFract + ":" + yFract);
+	public void onOwnPositionUpdate(int x, int y) {
+		sendMessage(MazeConstants.EVENT_POSITION_UPDATE + ":" + x + ":"
+				+ y);
+		Log.d("ownPos", "o" + x + ":" + y);
 	}
 
-	public void updateOpponentPosition(float xFract, float yFract) {
-		mDrawView.updateOpponentPosition(xFract, yFract);
-		Log.d("oppPos", "opp" + xFract + ":" + yFract);
+	public void updateOpponentPosition(int x, int y) {
+		mDrawView.updateOpponentPosition(x, y);
+		Log.d("oppPos", "opp" + x + ":" + y);
+	}
+
+	public void updateOpponentKeys(int x, int y) {
+		// TODO Auto-generated method stub
+		
 	}
 }

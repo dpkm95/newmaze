@@ -31,5 +31,8 @@ public class ChallengeActivity extends Activity{
 		drawView.setBackgroundColor(Color.WHITE);
 		setContentView(drawView);
 	}
+//	public void forceInvalidate() {		
+//		drawView.doInvalidate();
+//	}
 }
 
