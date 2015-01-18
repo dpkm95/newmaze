@@ -4,12 +4,14 @@ public class Pawn {
 	public int x,fx;
 	public int y,fy;
 	public int score;
-	public int lives;	
+	public float life;
+	public int path_covered;	
 	public Pawn(int i,int j){
 		x=i;
 		y=j;
 		score = 0;
-		lives = 1;
+		life = 100;
+		path_covered=0;
 	}
 	
 }

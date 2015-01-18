@@ -9,6 +9,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.LightingColorFilter;
 import android.graphics.Paint;
 import android.graphics.PointF;
 import android.graphics.Typeface;
@@ -22,6 +23,7 @@ import android.view.MotionEvent;
 import android.view.View;
 
 import com.dpkm95.maze.utils.BitmapTransformer;
+import com.dpkm95.maze.utils.GameControl;
 import com.dpkm95.maze.utils.MazeConstants;
 import com.dpkm95.maze.utils.Node;
 import com.dpkm95.maze.utils.Stack;
@@ -30,7 +32,7 @@ import com.dpkm95.maze.utils.Stack;
 public class DuelMode extends View {	
 	private int mClickCtr = 0;
 	private SparseArray<PointF> mActivePointers;
-	private Paint paint = new Paint();
+	private Paint paint, paint0, paint1, paint2, paint2i, paint3, paint3i;
 	private float W, H;
 	private float ballX, ballY,ballXf,ballYf;
 	private int mCols, mRows;
@@ -39,8 +41,6 @@ public class DuelMode extends View {
 	private float unit;	
 	private Pawn player,opponent;
 	private FlexibleMazeActivity root;
-	private int lcl,bcl;
-	private float offset;
 	private int[][] mMaze;
 	private LongestPathFinder lpf;
 	private Stack retPath, keys;
@@ -49,25 +49,25 @@ public class DuelMode extends View {
 	private boolean teleport = false;
 	private int restoreX = 0, restoreY = 0,teleX, teleY;
 	private Handler mHandler;
-	private Bitmap arrow;
+	private GameControl up, down, left, right;
 	private Vibrator vibrator;
 	private MediaPlayer mp_teleport, mp_key, mp_transition, mp_end,mp_win;
 	private long[] pattern_crash = { 50, 50, 50 };
 	private long[] pattern_win = { 50, 500, 50 };
 
-	public DuelMode(Context context, float width, float height,
+	public DuelMode(Context context,
 			int maze[][], Handler h) {
 		super(context);
 		mHandler = h;
 		root = (FlexibleMazeActivity) context;
+		W = getResources().getDisplayMetrics().widthPixels;
+		H = getResources().getDisplayMetrics().heightPixels;
 		this.mCols = maze.length;
 		this.mRows = maze[0].length;
 
-		this.unit = getUnitSize(height, mRows);
+		this.unit = getUnitSize(H, mRows);
 		mActivePointers = new SparseArray<PointF>();
-		this.W = width;
-		this.H = height;
-		mazeX = (width - (unit * 5 * mCols + unit)) / 2;
+		mazeX = (W - (unit * 5 * mCols + unit)) / 2;
 		mazeY = 2 * unit;
 		mazeXf = mazeX + unit * 5 * mCols + unit;
 		mazeYf = mazeY + unit * 5 * mRows + unit;
@@ -85,9 +85,62 @@ public class DuelMode extends View {
 		player = new Pawn(0,0);
 		opponent = new Pawn(0,0);	
 		
-		arrow = BitmapTransformer.getResizedBitmap(
-				BitmapFactory.decodeResource(getResources(), R.drawable.arrow),
-				(int) (4 * unit), (int) (4 * unit));
+		paint = new Paint();
+		paint0 = new Paint();
+		paint1 = new Paint();
+		paint2 = new Paint();
+		paint2i = new Paint();
+		paint3 = new Paint();
+		paint3i = new Paint();
+		paint0.setColor(Color.WHITE);
+		paint1.setTypeface(Typeface.createFromAsset(root.getAssets(),
+				"fonts/gisha.ttf"));
+		paint1.setStrokeWidth(unit);
+		paint3.setStrokeWidth(unit);
+		paint2.setTypeface(Typeface.createFromAsset(root.getAssets(),
+				"fonts/gisha.ttf"));
+		switch (MazeConstants.COLOR) {
+		case 0:// blue
+			paint1.setColor(Color.rgb(108, 185, 225));
+			paint2.setColor(Color.rgb(46, 153, 202));
+			paint2i.setColorFilter(new LightingColorFilter(0x2E99CA, 0));
+			paint3i.setColorFilter(new LightingColorFilter(0xACD6EA, 0));
+			paint3.setColor(Color.rgb(172, 214, 234));
+			break;
+		case 1:// pink
+			paint1.setColor(Color.rgb(247, 172, 213));
+			paint2.setColor(Color.rgb(218, 131, 173));
+			paint2i.setColorFilter(new LightingColorFilter(0xDA83AD, 0));
+			paint3i.setColorFilter(new LightingColorFilter(0xFCE9FC, 0));
+			paint3.setColor(Color.rgb(252, 233, 252));
+			break;
+		case 2:// purple
+			paint1.setColor(Color.rgb(165, 134, 191));
+			paint2.setColor(Color.rgb(139, 87, 162));
+			paint2i.setColorFilter(new LightingColorFilter(0x8B57A2, 0));
+			paint3i.setColorFilter(new LightingColorFilter(0xE3CDE4, 0));
+			paint3.setColor(Color.rgb(227, 205, 228));
+			break;
+		case 3:// brown
+			paint1.setColor(Color.rgb(232, 208, 182));
+			paint2.setColor(Color.rgb(168, 131, 105));
+			paint2i.setColorFilter(new LightingColorFilter(0xA88369, 0));
+			paint3i.setColorFilter(new LightingColorFilter(0xF8EFE6, 0));
+			paint3.setColor(Color.rgb(248, 239, 230));
+			break;
+		case 4:// grey
+			paint1.setColor(Color.rgb(166, 165, 163));
+			paint2.setColor(Color.rgb(125, 125, 125));
+			paint2i.setColorFilter(new LightingColorFilter(0x7D7D7D, 0));
+			paint3i.setColorFilter(new LightingColorFilter(0xC9CACC, 0));
+			paint3.setColor(Color.rgb(201, 202, 204));
+			break;
+		}
+		up = new GameControl(this, unit, 0);
+		down = new GameControl(this, unit, 1);
+		left = new GameControl(this, unit, 2);
+		right = new GameControl(this, unit, 3);
+		
 		vibrator = (Vibrator) context
 				.getSystemService(Context.VIBRATOR_SERVICE);
 		mp_teleport = MediaPlayer.create(context,
@@ -110,9 +163,7 @@ public class DuelMode extends View {
 		case MazeConstants.STATE_PLAY:
 			paintMaze(canvas);
 			paintBackground(canvas);
-
-			paintControlLine(canvas);
-
+			paintGameControls(canvas);
 			postOwnPosition();
 			paintDestination(canvas);
 
@@ -122,7 +173,7 @@ public class DuelMode extends View {
 			break;
 		case MazeConstants.STATE_CRASH:
 			if (MazeConstants.VIBRATION)
-				vibrator.vibrate(pattern_crash, -1);
+				vibrator.vibrate(pattern_crash, -1);			
 			//paintCrash(canvas);
 			//postCrashMessage(mHandler);
 			restoreBall();
@@ -149,46 +200,44 @@ public class DuelMode extends View {
 	}
 
 	private void paintMaze(Canvas canvas) {
-		paint.setColor(Color.rgb(0, 162, 232));
-		paint.setStrokeWidth(unit);
 		float px = mazeX, py = mazeY;
-		for (int i = 0; i < mCols; i++) {
+		for (int i = 0; i < mRows; i++) {
 			// print horizontal lines
-			for (int j = 0; j < mRows; j++) {
+			for (int j = 0; j < mCols; j++) {
 				if ((mMaze[j][i] & 1) == 0) {
 					checkCollision(px, py, false);
-					canvas.drawRect(px, py, px + 5 * unit, py + unit, paint);
+					canvas.drawRect(px, py, px + 5 * unit, py + unit, paint1);
 					px += 5 * unit;
 				} else {
-					canvas.drawRect(px, py, px + unit, py + unit, paint);
+					canvas.drawRect(px, py, px + unit, py + unit, paint1);
 					px += 5 * unit;
 				}
 			}
-			canvas.drawRect(px, py, px + unit, py + unit, paint);
+			canvas.drawRect(px, py, px + unit, py + unit, paint1);
 			px = mazeX;
 			// print vertical lines
-			for (int j = 0; j < mRows; j++) {
+			for (int j = 0; j < mCols; j++) {
 				if ((mMaze[j][i] & 8) == 0) {
 					checkCollision(px, py, true);
-					canvas.drawRect(px, py, px + unit, py + 5 * unit, paint);
+					canvas.drawRect(px, py, px + unit, py + 5 * unit, paint1);
 					px += 5 * unit;
 				} else {
 					px += 5 * unit;
 				}
 			}
 			checkCollision(px, py, true);
-			canvas.drawRect(px, py, px + unit, py + 5 * unit, paint);
+			canvas.drawRect(px, py, px + unit, py + 5 * unit, paint1);
 			py += 5 * unit;
 			px = mazeX;
 		}
 		// print bottom line
-		for (int i = 0; i < mRows; ++i) {
+		for (int i = 0; i < mCols; ++i) {
 			checkCollision(px + 5 * i * unit, py, false);
 			canvas.drawRect(px + 5 * i * unit, py, px + 5 * (i + 1) * unit, py
-					+ unit, paint);
+					+ unit, paint1);
 		}
-		canvas.drawRect(px + 5 * mRows * unit, py, px + 5 * mRows * unit + unit + unit,
-				py + unit, paint);
+		canvas.drawRect(px + 5 * mCols * unit, py, px + 5 * mCols * unit + unit,
+				py + unit, paint1);
 	}
 
 	private void checkCollision(float px, float py, boolean dir) {
@@ -199,49 +248,44 @@ public class DuelMode extends View {
 
 		if (dir) {
 			// move right
-			if (bcl == 3 && ballX < px && px < ballXf && py < ballY
+			if (right.pressed && ballX < px && px < ballXf && py < ballY
 					&& ballY < py + 4 * unit) {
 				mGameState = MazeConstants.STATE_CRASH;
 			}
 			// move left
-			if (bcl == 1 && ballXf < px + unit && px + unit < ballX
+			if (left.pressed && ballXf < px + unit && px + unit < ballX
 					&& py < ballY && ballY < py + 4 * unit) {
 				mGameState = MazeConstants.STATE_CRASH;
 			}
 		} else {
 			// move down
-			if (lcl == 3 && ballY < py && py < ballYf && px < ballX
+			if (down.pressed && ballY < py && py < ballYf && px < ballX
 					&& ballX < px + 4 * unit) {
 				mGameState = MazeConstants.STATE_CRASH;
 			}
 			// move up
-			if (lcl == 1 && ballYf < py + unit && py + unit < ballY
+			if (up.pressed && ballYf < py + unit && py + unit < ballY
 					&& px < ballX && ballX < px + 4 * unit) {
 				mGameState = MazeConstants.STATE_CRASH;
 			}
 		}
-		// invalidate();
 	}
 
 	// paints the non-maze part of screen
-	private void paintBackground(Canvas canvas) {
-		paint.setColor(Color.rgb(0, 162, 232));
-		canvas.drawRect(0, 0, mazeX, H, paint);
-		canvas.drawRect(0, 0, W, mazeY, paint);
-		canvas.drawRect(mazeXf, mazeY, W, H, paint);
-		canvas.drawRect(mazeX, mazeYf, W, H, paint);
-		paint.setColor(Color.WHITE);
-		paint.setTextSize(3 * unit);
-		paint.setTypeface(Typeface.createFromAsset(root.getAssets(),
-				"fonts/gisha.ttf"));
-		canvas.drawText("My Score:", mazeXf + (W - mazeXf) / 2
-				- (float) (4.5 * unit), H / 4 - 4 * unit, paint);
-		canvas.drawText(Integer.toString(player.score), mazeXf + (W - mazeXf) / 2
-				- (float) (1.5 * unit), H / 4, paint);
-		canvas.drawText("Opp Score:", mazeXf + (W - mazeXf) / 2
-				- (float) (4.5 * unit), H / 2, paint);
-		canvas.drawText(Integer.toString(opponent.score), mazeXf + (W - mazeXf) / 2
-				- (float) (1.5 * unit), H / 2 + 4 * unit, paint);
+	private void paintBackground(Canvas canvas) {		
+		canvas.drawRect(0, 0, mazeX, H, paint1);
+		canvas.drawRect(0, 0, W, mazeY, paint1);
+		canvas.drawRect(mazeXf, mazeY, W, H, paint1);
+		canvas.drawRect(mazeX, mazeYf, W, H, paint1);
+		
+		paint0.setTextSize(3 * unit);
+		canvas.drawText("Scores:", mazeXf + (W - mazeXf) / 2
+				- (float) (5.5 * unit), mazeY+4*unit, paint0);
+		paint0.setTextSize((int)(2.8 * unit));
+		canvas.drawText("Own:"+Integer.toString(player.score), mazeXf + (W - mazeXf) / 2
+				- (float) (5.5 * unit), mazeY+8*unit, paint0);
+		canvas.drawText("Opp:"+Integer.toString(opponent.score), mazeXf + (W - mazeXf) / 2
+				- (float) (5.5 * unit),mazeY+12*unit, paint0);
 		// Teleport location
 		if (teleport) {
 			paint.setColor(Color.GRAY);
@@ -251,54 +295,27 @@ public class DuelMode extends View {
 	}
 
 	// paints line on which pointer is placed
-	private void paintControlLine(Canvas canvas) {
-		paint.setColor(Color.rgb(153, 217, 234));
-
-		canvas.drawBitmap(arrow, mazeX - 5 * unit, mazeY, null);
-		Bitmap down_arrow = BitmapTransformer.RotateBitmap(arrow, 180);
-		canvas.drawBitmap(down_arrow, mazeX - 5 * unit, mazeYf - 4 * unit, null);
-		Bitmap left_arrow = BitmapTransformer.RotateBitmap(down_arrow, 90);
-		canvas.drawBitmap(left_arrow, mazeXf - 3 * offset - unit,
-				mazeYf + unit, null);
-		Bitmap right_arrow = BitmapTransformer.RotateBitmap(left_arrow, 180);
-		canvas.drawBitmap(right_arrow, mazeXf - 4 * unit, mazeYf + unit, null);
-
-		paint.setStrokeWidth(unit);
-		canvas.drawLine(mazeX - 3 * unit, mazeY + (int) (1.5 * unit), mazeX - 3
-				* unit, mazeYf - (int) (1.5 * unit), paint);
-		canvas.drawLine(mazeXf - 3 * offset + (int) (0.5 * unit), mazeYf + 3
-				* unit, mazeXf - (int) (1.5 * unit), mazeYf + 3 * unit, paint);
-		paint.setColor(Color.rgb(0, 162, 232));
-		switch (lcl) {
-		case 1:
-
-			canvas.drawRect(mazeX - 5 * unit, mazeY, mazeX - unit, mazeY
-					+ offset, paint);
-			break;
-		case 2:
-			canvas.drawRect(mazeX - 5 * unit, mazeY + offset, mazeX - unit,
-					mazeY + 2 * offset, paint);
-			break;
-		case 3:
-			canvas.drawRect(mazeX - 5 * unit, mazeY + 2 * offset, mazeX - unit,
-					mazeYf, paint);
-			break;
-		}
-		switch (bcl) {
-		case 1:
-			canvas.drawRect(mazeXf - 3 * offset - unit, mazeYf + unit, mazeXf
-					- 2 * offset, mazeYf + 5 * unit, paint);
-			break;
-		case 2:
-			canvas.drawRect(mazeXf - 2 * offset, mazeYf + unit,
-					mazeXf - offset, mazeYf + 5 * unit, paint);
-			break;
-		case 3:
-			canvas.drawRect(mazeXf - offset, mazeYf + unit, mazeXf, mazeYf + 5
-					* unit, paint);
-			break;
-		}
+	private void paintGameControls(Canvas canvas) {
+		if (up.pressed)
+			canvas.drawBitmap(up.image, 0, H - 38 * unit, paint3i);
+		else
+			canvas.drawBitmap(up.image, 0, H - 38 * unit, paint2i);
+		if (down.pressed)
+			canvas.drawBitmap(down.image, 0, H - 14 * unit, paint3i);
+		else
+			canvas.drawBitmap(down.image, 0, H - 14 * unit, paint2i);
+		if (left.pressed)
+			canvas.drawBitmap(left.image, W - 38 * unit, H - 12 * unit, paint3i);
+		else
+			canvas.drawBitmap(left.image, W - 38 * unit, H - 12 * unit, paint2i);
+		if (right.pressed)
+			canvas.drawBitmap(right.image, W - 14 * unit, H - 12 * unit,
+					paint3i);
+		else
+			canvas.drawBitmap(right.image, W - 14 * unit, H - 12 * unit,
+					paint2i);
 	}
+
 	
 	public void setDrawState(int state) {
 		mGameState = state;
@@ -446,14 +463,6 @@ public class DuelMode extends View {
 		int pointerIndex = event.getActionIndex();
 		int pointerId = event.getPointerId(pointerIndex);
 		int maskedAction = event.getActionMasked();
-		switch(mGameState){
-		case MazeConstants.STATE_CRASH:
-		case MazeConstants.STATE_LOSS:
-		case MazeConstants.STATE_WIN:
-			if(mClickCtr++==2)
-				postQuitMessage();
-			return false;//don't handle touch event
-		}
 		switch (maskedAction) {
 		case MotionEvent.ACTION_DOWN:
 		case MotionEvent.ACTION_POINTER_DOWN:
@@ -478,29 +487,22 @@ public class DuelMode extends View {
 				break;
 			}
 
-			if (event.getX() < mazeX && event.getY() < mazeYf) {
-				if (mazeY < event.getY() && event.getY() < mazeY + offset) {
-					lcl = 1;
+			if (event.getX() < mazeX) {
+				if (H - 40 * unit < event.getY()
+						&& event.getY() < H - 21 * unit) {
+					up.pressed = true;
 					player.fy -= 1;
-				} else if (mazeY + offset < event.getY()
-						&& event.getY() < mazeY + 2 * offset) {
-					lcl = 2;
-				} else if (mazeY + 2 * offset < event.getY()
-						&& event.getY() < mazeYf) {
-					lcl = 3;
+				} else if (H - 16 * unit < event.getY() && event.getY() < H) {
+					down.pressed = true;
 					player.fy += 1;
 				}
-			} else if (event.getY() > mazeYf && event.getX() > mazeX) {
-				if (mazeXf - 3 * offset < event.getX()
-						&& event.getX() < mazeXf - 2 * offset) {
-					bcl = 1;
+			} else if (event.getY() > mazeYf) {
+				if (W - 40 * unit < event.getX()
+						&& event.getX() < W - 21 * unit) {
+					left.pressed = true;
 					player.fx -= 1;
-				} else if (mazeXf - 2 * offset < event.getX()
-						&& event.getX() < mazeXf - offset) {
-					bcl = 2;
-				} else if (mazeXf - offset < event.getX()
-						&& event.getX() < mazeXf) {
-					bcl = 3;
+				} else if (W - 16 * unit < event.getX() && event.getX() < W) {
+					right.pressed = true;
 					player.fx += 1;
 				}
 			}
@@ -510,40 +512,13 @@ public class DuelMode extends View {
 			mActivePointers.put(pointerId, f);
 			break;
 		case MotionEvent.ACTION_MOVE:
-			for (int size = event.getPointerCount(), i = 0; i < size; i++) {
-				//PointF point = mActivePointers.get(event.getPointerId(i));
-				if (event.getX(i) < mazeX && event.getY(i) < mazeYf) {
-					if (mazeY < event.getY(i) && event.getY(i) < mazeY + offset) {
-						lcl = 1;
-					} else if (mazeY + offset < event.getY(i)
-							&& event.getY(i) < mazeY + 2 * offset) {
-						lcl = 2;
-					} else if (mazeY + 2 * offset < event.getY(i)
-							&& event.getY(i) < mazeYf) {
-						lcl = 3;
-					}
-				} else if (event.getY(i) > mazeYf && event.getX(i) > mazeX) {
-					if (mazeXf - 3 * offset < event.getX(i)
-							&& event.getX(i) < mazeXf - 2 * offset) {
-						bcl = 1;
-					} else if (mazeXf - 2 * offset < event.getX(i)
-							&& event.getX(i) < mazeXf - offset) {
-						bcl = 2;
-					} else if (mazeXf - offset < event.getX(i)
-							&& event.getX(i) < mazeXf) {
-						bcl = 3;
-					}
-				}
-			}
-			break;
 		case MotionEvent.ACTION_UP:
 		case MotionEvent.ACTION_POINTER_UP:
 		case MotionEvent.ACTION_CANCEL:
-			lcl = bcl = 0;
+			up.pressed = down.pressed = left.pressed = right.pressed = false;
 			mActivePointers.remove(pointerId);
 			break;
 		}
-
 		invalidate();
 		return true;
 	}

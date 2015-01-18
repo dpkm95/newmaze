@@ -214,6 +214,46 @@ public class Archiver {
 		}
 		return temp;
 	}
+	
+	public static int get_top_score(MainActivity root){
+		int[] temp  = new int[5];
+		if (MazeConstants.SIZE) {
+			try {
+				FileInputStream fin = root
+						.openFileInput("large_classic_scores");
+				int c;
+				String scores = "";
+				while ((c = fin.read()) != -1) {
+					scores = scores + Character.toString((char) c);
+				}
+				List<String> score_list = Arrays.asList(scores.split(","));
+				for (int i = 0; i < 5; ++i) {
+					temp[i] = Integer.parseInt(score_list.get(4 - i));
+				}
+				fin.close();
+			} catch (Exception e) {
+
+			}
+		} else {
+			try {
+				FileInputStream fin = root
+						.openFileInput("small_classic_scores");
+				int c;
+				String scores = "";
+				while ((c = fin.read()) != -1) {
+					scores = scores + Character.toString((char) c);
+				}
+				List<String> score_list = Arrays.asList(scores.split(","));
+				for (int i = 0; i < 5; ++i) {
+					temp[i] = Integer.parseInt(score_list.get(4 - i));
+				}
+				fin.close();
+			} catch (Exception e) {
+
+			}
+		}
+		return temp[0];
+	}
 
 	public static int[] get_challenge_scores(MainActivity root) {
 		int[] temp = new int[6];
@@ -257,7 +297,7 @@ public class Archiver {
 
 	public static void save_game_state(Context m_context, ClassicActivity root,
 			int[][] maze, int px, int py, int dx, int dy, Stack keys,
-			int key_count, int key_score, int lives, int life_number,
+			int key_count, int key_score, float lives, int life_number,
 			int teleX, int teleY, boolean teleport) throws IOException {
 		FileOutputStream fos = m_context.openFileOutput("o_maze",
 				Context.MODE_PRIVATE);
@@ -284,7 +324,7 @@ public class Archiver {
 					+ "," + Integer.toString(dx) + "," + Integer.toString(dy)
 					+ "," + Integer.toString(key_count) + ","
 					+ Integer.toString(key_score) + ","
-					+ Integer.toString(lives) + ","
+					+ Float.toString(lives) + ","
 					+ Integer.toString(life_number) + ","
 					+ Integer.toString(teleX) + "," + Integer.toString(teleY)
 					+ "," + Boolean.toString(teleport);
@@ -298,7 +338,7 @@ public class Archiver {
 
 	public static void save_game_state(Context m_context,
 			ClassicResumeActivity root, int[][] maze, int px, int py, int dx,
-			int dy, Stack keys, int key_count, int key_score, int lives,
+			int dy, Stack keys, int key_count, int key_score, float lives,
 			int life_number, int teleX, int teleY, boolean teleport)
 			throws IOException {
 		FileOutputStream fos = m_context.openFileOutput("o_maze",
@@ -326,7 +366,7 @@ public class Archiver {
 					+ "," + Integer.toString(dx) + "," + Integer.toString(dy)
 					+ "," + Integer.toString(key_count) + ","
 					+ Integer.toString(key_score) + ","
-					+ Integer.toString(lives) + ","
+					+ Float.toString(lives) + ","
 					+ Integer.toString(life_number) + ","
 					+ Integer.toString(teleX) + "," + Integer.toString(teleY)
 					+ "," + Boolean.toString(teleport);
@@ -364,10 +404,10 @@ public class Archiver {
 			o[4] = (int) Integer.parseInt(key.get(2));
 			o[5] = (int) Integer.parseInt(key.get(3));
 			o[6] = (int) Integer.parseInt(key.get(4));
-			o[7] = (int) Float.parseFloat(key.get(5));
-			o[8] = (int) Float.parseFloat(key.get(6));
-			o[9] = (int) Float.parseFloat(key.get(7));
-			o[10] = (int) Float.parseFloat(key.get(8));
+			o[7] = (int) Integer.parseInt(key.get(5));
+			o[8] = (float) Float.parseFloat(key.get(6));
+			o[9] = (int) Integer.parseInt(key.get(7));
+			o[10] = (int) Integer.parseInt(key.get(8));
 			o[11] = (int) Integer.parseInt((key.get(9)));
 			o[12] = (boolean) Boolean.parseBoolean(key.get(10));
 			fin.close();
@@ -454,9 +494,9 @@ public class Archiver {
 	}
 
 	public static void save_game_constants(MainActivity root, boolean sIZE,
-			int dIFFICULTY, boolean tONE, boolean vIBRATION, boolean rESUMABLE) {
+			int dIFFICULTY, boolean tONE, boolean vIBRATION, boolean rESUMABLE, int color) {
 		String constants = sIZE + "," + dIFFICULTY + "," + tONE + ","
-				+ vIBRATION + "," + rESUMABLE;
+				+ vIBRATION + "," + rESUMABLE +","+color;
 		try {
 			FileOutputStream fOut = root.openFileOutput("game_constants",
 					Context.MODE_PRIVATE);
@@ -487,10 +527,91 @@ public class Archiver {
 					.get(3));
 			MazeConstants.RESUMABLE = (boolean) Boolean.parseBoolean(constants
 					.get(4));
+			MazeConstants.COLOR = (int) Integer.parseInt(constants.get(5));
 			fin.close();
 		} catch (Exception e) {
 
 		}
+	}
+
+	public static int get_top_score(ClassicActivity root) {
+		int[] temp  = new int[5];
+		if (MazeConstants.SIZE) {
+			try {
+				FileInputStream fin = root
+						.openFileInput("large_classic_scores");
+				int c;
+				String scores = "";
+				while ((c = fin.read()) != -1) {
+					scores = scores + Character.toString((char) c);
+				}
+				List<String> score_list = Arrays.asList(scores.split(","));
+				for (int i = 0; i < 5; ++i) {
+					temp[i] = Integer.parseInt(score_list.get(4 - i));
+				}
+				fin.close();
+			} catch (Exception e) {
+
+			}
+		} else {
+			try {
+				FileInputStream fin = root
+						.openFileInput("small_classic_scores");
+				int c;
+				String scores = "";
+				while ((c = fin.read()) != -1) {
+					scores = scores + Character.toString((char) c);
+				}
+				List<String> score_list = Arrays.asList(scores.split(","));
+				for (int i = 0; i < 5; ++i) {
+					temp[i] = Integer.parseInt(score_list.get(4 - i));
+				}
+				fin.close();
+			} catch (Exception e) {
+
+			}
+		}
+		return temp[0];
+	}
+
+	public static int get_top_score(ClassicResumeActivity root) {
+		int[] temp  = new int[5];
+		if (MazeConstants.SIZE) {
+			try {
+				FileInputStream fin = root
+						.openFileInput("large_classic_scores");
+				int c;
+				String scores = "";
+				while ((c = fin.read()) != -1) {
+					scores = scores + Character.toString((char) c);
+				}
+				List<String> score_list = Arrays.asList(scores.split(","));
+				for (int i = 0; i < 5; ++i) {
+					temp[i] = Integer.parseInt(score_list.get(4 - i));
+				}
+				fin.close();
+			} catch (Exception e) {
+
+			}
+		} else {
+			try {
+				FileInputStream fin = root
+						.openFileInput("small_classic_scores");
+				int c;
+				String scores = "";
+				while ((c = fin.read()) != -1) {
+					scores = scores + Character.toString((char) c);
+				}
+				List<String> score_list = Arrays.asList(scores.split(","));
+				for (int i = 0; i < 5; ++i) {
+					temp[i] = Integer.parseInt(score_list.get(4 - i));
+				}
+				fin.close();
+			} catch (Exception e) {
+
+			}
+		}
+		return temp[0];
 	}
 
 }

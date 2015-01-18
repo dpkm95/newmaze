@@ -152,7 +152,7 @@ public class FlexibleMazeActivity extends Activity {
 		Display display = getWindowManager().getDefaultDisplay();
 		Point size = new Point();
 		display.getSize(size);
-		mDrawView = new DuelMode(this, size.x, size.y, mIntMaze,
+		mDrawView = new DuelMode(this, mIntMaze,
 				mHandler);
 		mDrawView.setBackgroundColor(Color.WHITE);
 		mDrawView.setOnClickListener(endActivityOnClickListener);

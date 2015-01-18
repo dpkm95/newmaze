@@ -17,6 +17,7 @@ public class MazeConstants {
 	public final static int STATE_CRASH = 2;
 	public final static int STATE_WIN = 3;
 	public final static int STATE_LOSS = 4;
+	public static int COLOR = 0;
 
 
 	public static class PositionUpdates {

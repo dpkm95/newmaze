@@ -8,25 +8,33 @@ import com.dpkm95.maze.activity.DeviceListActivity;
 import com.dpkm95.maze.activity.MainActivity;
 import com.dpkm95.maze.bluetooth.BluetoothChatService;
 import com.dpkm95.maze.utils.Archiver;
+import com.dpkm95.maze.utils.BitmapTransformer;
 import com.dpkm95.maze.utils.MazeConstants;
 import com.dpkm95.maze.R;
-
+import com.facebook.Session;
 import android.annotation.SuppressLint;
 import android.bluetooth.BluetoothAdapter;
+import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.ColorFilter;
+import android.graphics.ColorMatrix;
+import android.graphics.ColorMatrixColorFilter;
+import android.graphics.LightingColorFilter;
 import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.PointF;
 import android.graphics.Typeface;
+import android.net.Uri;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
 import android.util.SparseArray;
+import android.view.Display;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Toast;
@@ -50,16 +58,21 @@ public class LaunchView extends View {
 	private static float hot_b2_ix, hot_b2_iy, hot_b2_fx, hot_b2_fy;
 	private static float hot_b3_ix, hot_b3_iy, hot_b3_fx, hot_b3_fy;
 	private static float settings_ix, settings_iy, settings_fx, settings_fy;
-	private boolean bluetooth_pressed, discoverable_pressed, search_pressed;
+	private boolean bluetooth_pressed, discoverable_pressed, search_pressed,
+			share_pressed, rate_pressed;
 	private boolean classic_pressed, resume_pressed, challenge_pressed,
 			duel_pressed;
 	private int a_widget_pressed = 1, i_widget_pressed = 1;
 	private float unit, sel_w, hot_w;
-	private Paint paint = new Paint();
+	private Paint paint, paint0, paint1, paint2, paint2i, paint3, paint3i;
 	private float H, W;
 	private MainActivity root;
 	private Context m_context;
 	private int selection = 1;
+	private Bitmap classic, challenge, duel, achievements, instructions,
+			settings, easy, normal, hard, bluetooth, discoverable, search,
+			hot_classic, hot_challenge, hot_duel, large, small, tone,
+			vibration, share, rate, theme;
 
 	public LaunchView(Context context) {
 		super(context);
@@ -120,6 +133,124 @@ public class LaunchView extends View {
 		hot_b3_iy = unit;
 		hot_b3_fx = hot_b3_ix + hot_w;
 		hot_b3_fy = hot_b3_iy + hot_w / 2;
+
+		paint = new Paint();
+		paint0 = new Paint();
+		paint1 = new Paint();
+		paint2 = new Paint();
+		paint2i = new Paint();
+		paint3 = new Paint();
+		paint3i = new Paint();
+		paint0.setColor(Color.WHITE);
+		paint1.setTypeface(Typeface.createFromAsset(root.getAssets(),
+				"fonts/gisha.ttf"));
+		paint2.setTypeface(Typeface.createFromAsset(root.getAssets(),
+				"fonts/gisha.ttf"));
+		switch (MazeConstants.COLOR) {
+		case 0:// blue
+			paint1.setColor(Color.rgb(108, 185, 225));
+			paint2.setColor(Color.rgb(46, 153, 202));
+			paint2i.setColorFilter(new LightingColorFilter(0x2E99CA, 0));
+			paint3i.setColorFilter(new LightingColorFilter(0xACD6EA, 0));
+			paint3.setColor(Color.rgb(172, 214, 234));
+			break;
+		case 1:// pink
+			paint1.setColor(Color.rgb(247, 172, 213));
+			paint2.setColor(Color.rgb(218, 131, 173));
+			paint2i.setColorFilter(new LightingColorFilter(0xDA83AD, 0));
+			paint3i.setColorFilter(new LightingColorFilter(0xFCE9FC, 0));
+			paint3.setColor(Color.rgb(252, 233, 252));
+			break;
+		case 2:// purple
+			paint1.setColor(Color.rgb(165, 134, 191));
+			paint2.setColor(Color.rgb(139, 87, 162));
+			paint2i.setColorFilter(new LightingColorFilter(0x8B57A2, 0));
+			paint3i.setColorFilter(new LightingColorFilter(0xE3CDE4, 0));
+			paint3.setColor(Color.rgb(227, 205, 228));
+			break;
+		case 3:// brown
+			paint1.setColor(Color.rgb(232, 208, 182));
+			paint2.setColor(Color.rgb(168, 131, 105));
+			paint2i.setColorFilter(new LightingColorFilter(0xA88369, 0));
+			paint3i.setColorFilter(new LightingColorFilter(0xF8EFE6, 0));
+			paint3.setColor(Color.rgb(248, 239, 230));
+			break;
+		case 4:// grey
+			paint1.setColor(Color.rgb(166,165,163));
+			paint2.setColor(Color.rgb(125, 125, 125));
+			paint2i.setColorFilter(new LightingColorFilter(0x7D7D7D, 0));
+			paint3i.setColorFilter(new LightingColorFilter(0xC9CACC, 0));
+			paint3.setColor(Color.rgb(201, 202, 204));
+			break;
+		}
+
+		classic = BitmapTransformer.getResizedBitmap(BitmapFactory
+				.decodeResource(getResources(), R.drawable.classic),
+				(int) sel_w, (int) sel_w);
+		challenge = BitmapTransformer.getResizedBitmap(BitmapFactory
+				.decodeResource(getResources(), R.drawable.challenge),
+				(int) sel_w, (int) sel_w);
+		duel = BitmapTransformer.getResizedBitmap(
+				BitmapFactory.decodeResource(getResources(), R.drawable.duel),
+				(int) sel_w, (int) sel_w);
+		achievements = BitmapTransformer.getResizedBitmap(BitmapFactory
+				.decodeResource(getResources(), R.drawable.achievements),
+				(int) sel_w, (int) sel_w);
+		instructions = BitmapTransformer.getResizedBitmap(BitmapFactory
+				.decodeResource(getResources(), R.drawable.instructions),
+				(int) sel_w, (int) sel_w);
+		settings = BitmapTransformer.getResizedBitmap(BitmapFactory
+				.decodeResource(getResources(), R.drawable.settings),
+				(int) sel_w, (int) sel_w);
+		easy = BitmapTransformer.getResizedBitmap(
+				BitmapFactory.decodeResource(getResources(), R.drawable.easy),
+				(int) hot_w, (int) hot_w / 2);
+		normal = BitmapTransformer
+				.getResizedBitmap(BitmapFactory.decodeResource(getResources(),
+						R.drawable.normal), (int) hot_w, (int) hot_w / 2);
+		hard = BitmapTransformer.getResizedBitmap(
+				BitmapFactory.decodeResource(getResources(), R.drawable.hard),
+				(int) hot_w, (int) hot_w / 2);
+		bluetooth = BitmapTransformer.getResizedBitmap(BitmapFactory
+				.decodeResource(getResources(), R.drawable.bluetooth),
+				(int) hot_w, (int) hot_w / 2);
+		discoverable = BitmapTransformer.getResizedBitmap(BitmapFactory
+				.decodeResource(getResources(), R.drawable.discoverable),
+				(int) hot_w, (int) hot_w / 2);
+		search = BitmapTransformer
+				.getResizedBitmap(BitmapFactory.decodeResource(getResources(),
+						R.drawable.search), (int) hot_w, (int) hot_w / 2);
+		hot_classic = BitmapTransformer.getResizedBitmap(BitmapFactory
+				.decodeResource(getResources(), R.drawable.a_classic),
+				(int) hot_w, (int) hot_w / 2);
+		hot_challenge = BitmapTransformer.getResizedBitmap(BitmapFactory
+				.decodeResource(getResources(), R.drawable.a_challenge),
+				(int) hot_w, (int) hot_w / 2);
+		hot_duel = BitmapTransformer
+				.getResizedBitmap(BitmapFactory.decodeResource(getResources(),
+						R.drawable.a_duel), (int) hot_w, (int) hot_w / 2);
+		large = BitmapTransformer.getResizedBitmap(
+				BitmapFactory.decodeResource(getResources(), R.drawable.large),
+				(int) hot_w, (int) hot_w / 2);
+		small = BitmapTransformer.getResizedBitmap(
+				BitmapFactory.decodeResource(getResources(), R.drawable.small),
+				(int) hot_w, (int) hot_w / 2);
+		tone = BitmapTransformer.getResizedBitmap(
+				BitmapFactory.decodeResource(getResources(), R.drawable.tone),
+				(int) hot_w, (int) hot_w / 2);
+		vibration = BitmapTransformer.getResizedBitmap(BitmapFactory
+				.decodeResource(getResources(), R.drawable.vibration),
+				(int) hot_w, (int) hot_w / 2);
+		share = BitmapTransformer.getResizedBitmap(
+				BitmapFactory.decodeResource(getResources(), R.drawable.share),
+				(int) hot_w, (int) hot_w / 2);
+		rate = BitmapTransformer.getResizedBitmap(
+				BitmapFactory.decodeResource(getResources(), R.drawable.rate),
+				(int) hot_w, (int) hot_w / 2);
+		theme = BitmapTransformer.getResizedBitmap(
+				BitmapFactory.decodeResource(getResources(), R.drawable.theme),
+				(int) hot_w, (int) hot_w / 2);
+
 	}
 
 	public void onDraw(Canvas canvas) {
@@ -132,332 +263,253 @@ public class LaunchView extends View {
 		if (!hasFocus) {
 			Archiver.save_game_constants(root, MazeConstants.SIZE,
 					MazeConstants.DIFFICULTY, MazeConstants.TONE,
-					MazeConstants.VIBRATION, MazeConstants.RESUMABLE);
+					MazeConstants.VIBRATION, MazeConstants.RESUMABLE,
+					MazeConstants.COLOR);
+		}
+	}
+
+	private void changeColor() {
+		switch (MazeConstants.COLOR) {
+		case 0:// blue
+			paint1.setColor(Color.rgb(108, 185, 225));
+			paint2.setColor(Color.rgb(46, 153, 202));
+			paint2i.setColorFilter(new LightingColorFilter(0x2E99CA, 0));
+			paint3i.setColorFilter(new LightingColorFilter(0xACD6EA, 0));
+			paint3.setColor(Color.rgb(172, 214, 234));
+			break;
+		case 1:// pink
+			paint1.setColor(Color.rgb(247, 172, 213));
+			paint2.setColor(Color.rgb(218, 131, 173));
+			paint2i.setColorFilter(new LightingColorFilter(0xDA83AD, 0));
+			paint3i.setColorFilter(new LightingColorFilter(0xFCE9FC, 0));
+			paint3.setColor(Color.rgb(252, 233, 252));
+			break;
+		case 2:// purple
+			paint1.setColor(Color.rgb(165, 134, 191));
+			paint2.setColor(Color.rgb(139, 87, 162));
+			paint2i.setColorFilter(new LightingColorFilter(0x8B57A2, 0));
+			paint3i.setColorFilter(new LightingColorFilter(0xE3CDE4, 0));
+			paint3.setColor(Color.rgb(227, 205, 228));
+			break;
+		case 3:// brown
+			paint1.setColor(Color.rgb(232, 208, 182));
+			paint2.setColor(Color.rgb(168, 131, 105));
+			paint2i.setColorFilter(new LightingColorFilter(0xA88369, 0));
+			paint3i.setColorFilter(new LightingColorFilter(0xF8EFE6, 0));
+			paint3.setColor(Color.rgb(248, 239, 230));
+			break;
+		case 4:// grey
+			paint1.setColor(Color.rgb(166,165,163));
+			paint2.setColor(Color.rgb(125, 125, 125));
+			paint2i.setColorFilter(new LightingColorFilter(0x7D7D7D, 0));
+			paint3i.setColorFilter(new LightingColorFilter(0xC9CACC, 0));
+			paint3.setColor(Color.rgb(201, 202, 204));
+			break;
+
 		}
 	}
 
 	private void draw_options(Canvas canvas) {
-		paint.setColor(Color.rgb(0, 162, 232));
-		canvas.drawRect(0, 0, W, H, paint);
-
-		paint.setColor(Color.WHITE);
+		canvas.drawRect(0, 0, W, H, paint1);
 		canvas.drawRect(classic_ix + unit, classic_iy + unit,
-				classic_fx - unit, classic_fy - unit, paint);
+				classic_fx - unit, classic_fy - unit, paint0);
 		canvas.drawRect(challenge_ix + unit, challenge_iy + unit, challenge_fx
-				- unit, challenge_fy - unit, paint);
+				- unit, challenge_fy - unit, paint0);
 		canvas.drawRect(duel_ix + unit, duel_iy + unit, duel_fx - unit, duel_fy
-				- unit, paint);
+				- unit, paint0);
 		canvas.drawRect(acheivements_ix + unit, acheivements_iy + unit,
-				acheivements_fx - unit, acheivements_fy - unit, paint);
+				acheivements_fx - unit, acheivements_fy - unit, paint0);
 		canvas.drawRect(instructions_ix + unit, instructions_iy + unit,
-				instructions_fx - unit, instructions_fy - unit, paint);
+				instructions_fx - unit, instructions_fy - unit, paint0);
 		canvas.drawRect(settings_ix + unit, settings_iy + unit, settings_fx
-				- unit, settings_fy - unit, paint);
+				- unit, settings_fy - unit, paint0);
 		select_button(selection, canvas);
 
-		Bitmap classic = BitmapFactory.decodeResource(getResources(),
-				R.drawable.classic);
-		Bitmap r_classic = getResizedBitmap(classic, (int) sel_w, (int) sel_w);
-		canvas.drawBitmap(r_classic, classic_ix, classic_iy, null);
-		Bitmap challenge = BitmapFactory.decodeResource(getResources(),
-				R.drawable.challenge);
-		Bitmap r_challenge = getResizedBitmap(challenge, (int) sel_w,
-				(int) sel_w);
-		canvas.drawBitmap(r_challenge, challenge_ix, challenge_iy, null);
-		Bitmap duel = BitmapFactory.decodeResource(getResources(),
-				R.drawable.duel);
-		Bitmap r_duel = getResizedBitmap(duel, (int) sel_w, (int) sel_w);
-		canvas.drawBitmap(r_duel, duel_ix, duel_iy, null);
-		Bitmap acheivements = BitmapFactory.decodeResource(getResources(),
-				R.drawable.acheivements);
-		Bitmap r_acheivements = getResizedBitmap(acheivements, (int) sel_w,
-				(int) sel_w);
-		canvas.drawBitmap(r_acheivements, acheivements_ix, acheivements_iy,
-				null);
-		Bitmap instructions = BitmapFactory.decodeResource(getResources(),
-				R.drawable.instructions);
-		Bitmap r_instructions = getResizedBitmap(instructions, (int) sel_w,
-				(int) sel_w);
-		canvas.drawBitmap(r_instructions, instructions_ix, instructions_iy,
-				null);
-		Bitmap settings = BitmapFactory.decodeResource(getResources(),
-				R.drawable.settings);
-		Bitmap r_settings = getResizedBitmap(settings, (int) sel_w, (int) sel_w);
-		canvas.drawBitmap(r_settings, settings_ix, settings_iy, null);
+		canvas.drawBitmap(classic, classic_ix, classic_iy, paint2i);
+		canvas.drawBitmap(challenge, challenge_ix, challenge_iy, paint2i);
+		canvas.drawBitmap(duel, duel_ix, duel_iy, paint2i);
+		canvas.drawBitmap(achievements, acheivements_ix, acheivements_iy,
+				paint2i);
+		canvas.drawBitmap(instructions, instructions_ix, instructions_iy,
+				paint2i);
+		canvas.drawBitmap(settings, settings_ix, settings_iy, paint2i);
 	}
 
 	private void select_button(int selection, Canvas canvas) {
-		paint.setColor(Color.rgb(0, 162, 232));
 		switch (selection) {
 		case 1:
 			canvas.drawRect(classic_ix, classic_iy, classic_fx, classic_fy,
-					paint);
+					paint1);
 			break;
 		case 2:
 			canvas.drawRect(challenge_ix, challenge_iy, challenge_fx,
-					challenge_fy, paint);
+					challenge_fy, paint1);
 			break;
 		case 3:
-			canvas.drawRect(duel_ix, duel_iy, duel_fx, duel_fy, paint);
+			canvas.drawRect(duel_ix, duel_iy, duel_fx, duel_fy, paint1);
 			break;
 		case 4:
 			canvas.drawRect(acheivements_ix, acheivements_iy, acheivements_fx,
-					acheivements_fy, paint);
+					acheivements_fy, paint1);
 			break;
 		case 5:
 			canvas.drawRect(instructions_ix, instructions_iy, instructions_fx,
-					instructions_fy, paint);
+					instructions_fy, paint1);
 			break;
 		case 6:
 			canvas.drawRect(settings_ix, settings_iy, settings_fx, settings_fy,
-					paint);
+					paint1);
 			break;
 		}
-	}
-
-	public Bitmap getResizedBitmap(Bitmap image, int bitmapWidth,
-			int bitmapHeight) {
-		return Bitmap
-				.createScaledBitmap(image, bitmapWidth, bitmapHeight, true);
-	}
-
-	public static Bitmap RotateBitmap(Bitmap source, float angle) {
-		Matrix matrix = new Matrix();
-		matrix.postRotate(angle);
-		return Bitmap.createBitmap(source, 0, 0, source.getWidth(),
-				source.getHeight(), matrix, true);
 	}
 
 	private void render_widgets(Canvas canvas, int selection) {
 		switch (selection) {
 		case 1:
-			paint.setColor(Color.rgb(153, 217, 234));
-			canvas.drawRect(3 * unit + 2 * sel_w, unit, W - unit, unit
-					+ (H - 3 * unit) / 2, paint);
-			canvas.drawRect(3 * unit + 2 * sel_w,
-					2 * unit + (H - 3 * unit) / 2, W - unit, H - unit, paint);
-
-			paint.setTextSize(5 * unit);
-			paint.setTypeface(Typeface.createFromAsset(root.getAssets(),
-					"fonts/gisha.ttf"));
+			paint1.setTextSize(5 * unit);
+			paint2.setTextSize(5 * unit);
 			if (classic_pressed) {
-				paint.setColor(Color.rgb(0, 162, 232));
+				canvas.drawRect(3 * unit + 2 * sel_w, unit, W - unit, unit
+						+ (H - 3 * unit) / 2, paint2);
+
 				canvas.drawText("New Game", 3 * unit + 2 * sel_w
 						+ (W - 4 * unit - 2 * sel_w) / 2 - 3 * unit * 4, 3
-						* unit + (H - 3 * unit) / 4, paint);
+						* unit + (H - 3 * unit) / 4, paint1);
 			} else {
-				paint.setColor(Color.WHITE);
+				canvas.drawRect(3 * unit + 2 * sel_w, unit, W - unit, unit
+						+ (H - 3 * unit) / 2, paint3);
+
 				canvas.drawText("New Game", 3 * unit + 2 * sel_w
 						+ (W - 4 * unit - 2 * sel_w) / 2 - 3 * unit * 4, 3
-						* unit + (H - 3 * unit) / 4, paint);
+						* unit + (H - 3 * unit) / 4, paint2);
 			}
 
 			if (resume_pressed) {
-				paint.setColor(Color.rgb(0, 162, 232));
+				canvas.drawRect(3 * unit + 2 * sel_w, 2 * unit + (H - 3 * unit)
+						/ 2, W - unit, H - unit, paint2);
 				canvas.drawText("  Resume", 3 * unit + 2 * sel_w
 						+ (W - 4 * unit - 2 * sel_w) / 2 - 3 * unit * 4, 4
-						* unit + 3 * (H - 3 * unit) / 4, paint);
+						* unit + 3 * (H - 3 * unit) / 4, paint1);
 			} else {
-				paint.setColor(Color.WHITE);
+				canvas.drawRect(3 * unit + 2 * sel_w, 2 * unit + (H - 3 * unit)
+						/ 2, W - unit, H - unit, paint3);
 				canvas.drawText("  Resume", 3 * unit + 2 * sel_w
 						+ (W - 4 * unit - 2 * sel_w) / 2 - 3 * unit * 4, 4
-						* unit + 3 * (H - 3 * unit) / 4, paint);
+						* unit + 3 * (H - 3 * unit) / 4, paint2);
 			}
-
 			break;
 		case 2:
-			paint.setColor(Color.WHITE);
-			canvas.drawRect(hot_b1_ix + unit, hot_b1_iy + unit, hot_b1_fx
-					- unit, hot_b1_fy - unit, paint);
-			canvas.drawRect(hot_b2_ix + unit, hot_b2_iy + unit, hot_b2_fx
-					- unit, hot_b2_fy - unit, paint);
-			canvas.drawRect(hot_b3_ix + unit, hot_b3_iy + unit, hot_b3_fx
-					- unit, hot_b3_fy - unit, paint);
+			paint1.setTextSize(5 * unit);
+			paint2.setTextSize(5 * unit);
 			switch (MazeConstants.DIFFICULTY) {
 			case 1:
-				paint.setColor(Color.rgb(0, 162, 232));
 				canvas.drawRect(hot_b1_ix, hot_b1_iy, hot_b1_fx, hot_b1_fy,
-						paint);
+						paint2);
 				break;
 			case 2:
-				paint.setColor(Color.rgb(0, 162, 232));
 				canvas.drawRect(hot_b2_ix, hot_b2_iy, hot_b2_fx, hot_b2_fy,
-						paint);
+						paint2);
 				break;
 			case 3:
-				paint.setColor(Color.rgb(0, 162, 232));
 				canvas.drawRect(hot_b3_ix, hot_b3_iy, hot_b3_fx, hot_b3_fy,
-						paint);
-
+						paint2);
 				break;
 			}
-			Bitmap easy = BitmapFactory.decodeResource(getResources(),
-					R.drawable.easy);
-			Bitmap r_easy = getResizedBitmap(easy, (int) hot_w, (int) hot_w / 2);
-			canvas.drawBitmap(r_easy, hot_b1_ix, hot_b1_iy, null);
 
-			Bitmap normal = BitmapFactory.decodeResource(getResources(),
-					R.drawable.normal);
-			Bitmap r_normal = getResizedBitmap(normal, (int) hot_w,
-					(int) hot_w / 2);
-			canvas.drawBitmap(r_normal, hot_b2_ix, hot_b2_iy, null);
+			canvas.drawBitmap(easy, hot_b1_ix, hot_b1_iy, paint3i);
+			canvas.drawBitmap(normal, hot_b2_ix, hot_b2_iy, paint3i);
+			canvas.drawBitmap(hard, hot_b3_ix, hot_b3_iy, paint3i);
 
-			Bitmap hard = BitmapFactory.decodeResource(getResources(),
-					R.drawable.hard);
-			Bitmap r_hard = getResizedBitmap(hard, (int) hot_w, (int) hot_w / 2);
-			canvas.drawBitmap(r_hard, hot_b3_ix, hot_b3_iy, null);
-
-			paint.setColor(Color.rgb(153, 217, 234));
-			canvas.drawRect(hot_b1_ix, hot_b1_fy + unit, W - unit, H - unit,
-					paint);
-
-			paint.setColor(Color.WHITE);
-			paint.setTextSize(5 * unit);
-			paint.setTypeface(Typeface.createFromAsset(root.getAssets(),
-					"fonts/gisha.ttf"));
 			if (challenge_pressed) {
-				paint.setColor(Color.rgb(0, 162, 232));
+				canvas.drawRect(hot_b1_ix, hot_b1_fy + unit, W - unit,
+						H - unit, paint2);
 				canvas.drawText("  Start", hot_b1_ix
 						+ (W - 4 * unit - 2 * sel_w) / 2 - 3 * unit * 3,
 						hot_b1_fy + 3 * unit + (H - 5 * unit - hot_w / 2) / 2,
-						paint);
+						paint1);
 			} else {
-				paint.setColor(Color.WHITE);
+				canvas.drawRect(hot_b1_ix, hot_b1_fy + unit, W - unit,
+						H - unit, paint3);
 				canvas.drawText("  Start", hot_b1_ix
 						+ (W - 4 * unit - 2 * sel_w) / 2 - 3 * unit * 3,
 						hot_b1_fy + 3 * unit + (H - 5 * unit - hot_w / 2) / 2,
-						paint);
+						paint2);
 			}
 
 			break;
 		case 3:
-			paint.setColor(Color.WHITE);
-			canvas.drawRect(hot_b1_ix + unit, hot_b1_iy + unit, hot_b1_fx
-					- unit, hot_b1_fy - unit, paint);
-			canvas.drawRect(hot_b2_ix + unit, hot_b2_iy + unit, hot_b2_fx
-					- unit, hot_b2_fy - unit, paint);
-			canvas.drawRect(hot_b3_ix + unit, hot_b3_iy + unit, hot_b3_fx
-					- unit, hot_b3_fy - unit, paint);
+			paint1.setTextSize(5 * unit);
+			paint2.setTextSize(5 * unit);
 			if (bluetooth_pressed) {
-				paint.setColor(Color.rgb(0, 162, 232));
 				canvas.drawRect(hot_b1_ix, hot_b1_iy, hot_b1_fx, hot_b1_fy,
-						paint);
+						paint2);
 			}
 			if (discoverable_pressed) {
-				paint.setColor(Color.rgb(0, 162, 232));
 				canvas.drawRect(hot_b2_ix, hot_b2_iy, hot_b2_fx, hot_b2_fy,
-						paint);
+						paint2);
 			}
 			if (search_pressed) {
-				paint.setColor(Color.rgb(0, 162, 232));
 				canvas.drawRect(hot_b3_ix, hot_b3_iy, hot_b3_fx, hot_b3_fy,
-						paint);
+						paint2);
 			}
-			Bitmap bluetooth = BitmapFactory.decodeResource(getResources(),
-					R.drawable.bluetooth);
-			Bitmap r_bluetooth = getResizedBitmap(bluetooth, (int) hot_w,
-					(int) hot_w / 2);
-			canvas.drawBitmap(r_bluetooth, hot_b1_ix, hot_b1_iy, null);
 
-			Bitmap discoverable = BitmapFactory.decodeResource(getResources(),
-					R.drawable.discoverable);
-			Bitmap r_discoverable = getResizedBitmap(discoverable, (int) hot_w,
-					(int) hot_w / 2);
-			canvas.drawBitmap(r_discoverable, hot_b2_ix, hot_b2_iy, null);
+			canvas.drawBitmap(bluetooth, hot_b1_ix, hot_b1_iy, paint3i);
+			canvas.drawBitmap(discoverable, hot_b2_ix, hot_b2_iy, paint3i);
+			canvas.drawBitmap(search, hot_b3_ix, hot_b3_iy, paint3i);
 
-			Bitmap search = BitmapFactory.decodeResource(getResources(),
-					R.drawable.search);
-			Bitmap r_search = getResizedBitmap(search, (int) hot_w,
-					(int) hot_w / 2);
-			canvas.drawBitmap(r_search, hot_b3_ix, hot_b3_iy, null);
-
-			paint.setColor(Color.rgb(153, 217, 234));
-			canvas.drawRect(hot_b1_ix, hot_b1_fy + unit, W - unit, H - unit,
-					paint);
-			paint.setTextSize(5 * unit);
-			paint.setTypeface(Typeface.createFromAsset(root.getAssets(),
-					"fonts/gisha.ttf"));
-
-			if (duel_pressed) {
-				paint.setColor(Color.rgb(0, 162, 232));
+			if (challenge_pressed) {
+				canvas.drawRect(hot_b1_ix, hot_b1_fy + unit, W - unit,
+						H - unit, paint2);
 				canvas.drawText("  Start", hot_b1_ix
 						+ (W - 4 * unit - 2 * sel_w) / 2 - 3 * unit * 3,
 						hot_b1_fy + 3 * unit + (H - 5 * unit - hot_w / 2) / 2,
-						paint);
+						paint1);
 			} else {
-				paint.setColor(Color.WHITE);
+				canvas.drawRect(hot_b1_ix, hot_b1_fy + unit, W - unit,
+						H - unit, paint3);
 				canvas.drawText("  Start", hot_b1_ix
 						+ (W - 4 * unit - 2 * sel_w) / 2 - 3 * unit * 3,
 						hot_b1_fy + 3 * unit + (H - 5 * unit - hot_w / 2) / 2,
-						paint);
+						paint2);
 			}
 
 			break;
 		case 4:
-			paint.setColor(Color.WHITE);
-			canvas.drawRect(hot_b1_ix + unit, hot_b1_iy + unit, hot_b1_fx
-					- unit, hot_b1_fy - unit, paint);
-			canvas.drawRect(hot_b2_ix + unit, hot_b2_iy + unit, hot_b2_fx
-					- unit, hot_b2_fy - unit, paint);
-			canvas.drawRect(hot_b3_ix + unit, hot_b3_iy + unit, hot_b3_fx
-					- unit, hot_b3_fy - unit, paint);
 			switch (a_widget_pressed) {
 			case 1:
-				paint.setColor(Color.rgb(0, 162, 232));
 				canvas.drawRect(hot_b1_ix, hot_b1_iy, hot_b1_fx, hot_b1_fy,
-						paint);
+						paint2);
 				break;
 			case 2:
-				paint.setColor(Color.rgb(0, 162, 232));
 				canvas.drawRect(hot_b2_ix, hot_b2_iy, hot_b2_fx, hot_b2_fy,
-						paint);
+						paint2);
 				break;
 			case 3:
-				paint.setColor(Color.rgb(0, 162, 232));
 				canvas.drawRect(hot_b3_ix, hot_b3_iy, hot_b3_fx, hot_b3_fy,
-						paint);
+						paint2);
 
 				break;
 			}
-			Bitmap aclassic = BitmapFactory.decodeResource(getResources(),
-					R.drawable.a_classic);
-			Bitmap r_aclassic = getResizedBitmap(aclassic, (int) hot_w,
-					(int) hot_w / 2);
-			canvas.drawBitmap(r_aclassic, hot_b1_ix, hot_b1_iy, null);
 
-			Bitmap achallenge = BitmapFactory.decodeResource(getResources(),
-					R.drawable.a_challenge);
-			Bitmap r_achallenge = getResizedBitmap(achallenge, (int) hot_w,
-					(int) hot_w / 2);
-			canvas.drawBitmap(r_achallenge, hot_b2_ix, hot_b2_iy, null);
+			canvas.drawBitmap(hot_classic, hot_b1_ix, hot_b1_iy, paint3i);
+			canvas.drawBitmap(hot_challenge, hot_b2_ix, hot_b2_iy, paint3i);
+			canvas.drawBitmap(hot_duel, hot_b3_ix, hot_b3_iy, paint3i);
 
-			Bitmap aduel = BitmapFactory.decodeResource(getResources(),
-					R.drawable.a_duel);
-			Bitmap r_aduel = getResizedBitmap(aduel, (int) hot_w,
-					(int) hot_w / 2);
-			canvas.drawBitmap(r_aduel, hot_b3_ix, hot_b3_iy, null);
-
-			paint.setColor(Color.rgb(153, 217, 234));
 			canvas.drawRect(hot_b1_ix, hot_b1_fy + unit, W - unit, H - unit,
-					paint);
+					paint3);
 
 			switch (a_widget_pressed) {
 			case 1:
-				paint.setColor(Color.WHITE);
-				paint.setTextSize(4 * unit);
-				paint.setTypeface(Typeface.createFromAsset(root.getAssets(),
-						"fonts/gisha.ttf"));
+				paint2.setTextSize(4 * unit);
 				int[] scores = Archiver.get_classic_scores(root);
-				paint.setColor(Color.WHITE);
 				canvas.drawText("Classic mode top scores:", hot_b1_ix + 2
-						* unit, hot_b1_fy + 6 * unit, paint);
-				paint.setColor(Color.rgb(0, 162, 232));
+						* unit, hot_b1_fy + 6 * unit, paint2);
 				for (int i = 0; i < 5; ++i) {
 					canvas.drawText(i + 1 + ") " + Integer.toString(scores[i]),
 							hot_b1_ix + hot_w / 4, hot_b1_fy + (12 + 5 * i)
-									* unit, paint);
+									* unit, paint2);
 				}
-				paint.setTextSize(18 * unit);
+				paint1.setTextSize(18 * unit);
 				int i = 0,
 				j = scores[0];
 				while (j > 0) {
@@ -465,40 +517,35 @@ public class LaunchView extends View {
 					i++;
 				}
 				canvas.drawText(Integer.toString(scores[0]), W - i
-						* (hot_w / 2), settings_fy, paint);
+						* (hot_w / 2), settings_fy, paint1);
 				break;
 			case 2:
-				paint.setColor(Color.WHITE);
-				paint.setTextSize(4 * unit);
-				paint.setTypeface(Typeface.createFromAsset(root.getAssets(),
-						"fonts/gisha.ttf"));
+				paint2.setTextSize(4 * unit);
 				int[] ch_scores = Archiver.get_challenge_scores(root);
-				paint.setColor(Color.WHITE);
 				canvas.drawText("Challenge mode records:",
-						hot_b1_ix + 2 * unit, hot_b1_fy + 6 * unit, paint);
-				paint.setTextSize(3 * unit);
+						hot_b1_ix + 2 * unit, hot_b1_fy + 6 * unit, paint2);
+				paint2.setTextSize(3 * unit);
 				canvas.drawText("Easy", hot_b1_ix + 4 * unit, hot_b1_fy + 12
-						* unit, paint);
+						* unit, paint2);
 				canvas.drawText("Normal", hot_b1_ix + 4 * unit, hot_b1_fy + 24
-						* unit, paint);
+						* unit, paint2);
 				canvas.drawText("Hard", hot_b1_ix + 4 * unit, hot_b1_fy + 36
-						* unit, paint);
+						* unit, paint2);
 
-				paint.setColor(Color.rgb(0, 162, 232));
 				canvas.drawText("won     :  " + Integer.toString(ch_scores[0]),
-						hot_b1_ix + 6 * unit, hot_b1_fy + 16 * unit, paint);
+						hot_b1_ix + 6 * unit, hot_b1_fy + 16 * unit, paint2);
 				canvas.drawText("played :  " + Integer.toString(ch_scores[1]),
-						hot_b1_ix + 6 * unit, hot_b1_fy + 20 * unit, paint);
+						hot_b1_ix + 6 * unit, hot_b1_fy + 20 * unit, paint2);
 				canvas.drawText("won     :  " + Integer.toString(ch_scores[2]),
-						hot_b1_ix + 6 * unit, hot_b1_fy + 28 * unit, paint);
+						hot_b1_ix + 6 * unit, hot_b1_fy + 28 * unit, paint2);
 				canvas.drawText("played :  " + Integer.toString(ch_scores[3]),
-						hot_b1_ix + 6 * unit, hot_b1_fy + 32 * unit, paint);
+						hot_b1_ix + 6 * unit, hot_b1_fy + 32 * unit, paint2);
 				canvas.drawText("won     :  " + Integer.toString(ch_scores[4]),
-						hot_b1_ix + 6 * unit, hot_b1_fy + 40 * unit, paint);
+						hot_b1_ix + 6 * unit, hot_b1_fy + 40 * unit, paint2);
 				canvas.drawText("played :  " + Integer.toString(ch_scores[5]),
-						hot_b1_ix + 6 * unit, hot_b1_fy + 44 * unit, paint);
+						hot_b1_ix + 6 * unit, hot_b1_fy + 44 * unit, paint2);
 
-				paint.setTextSize(8 * unit);
+				paint1.setTextSize(8 * unit);
 				i = 0;
 				j = ch_scores[0];
 				while (j > 0) {
@@ -506,19 +553,19 @@ public class LaunchView extends View {
 					i++;
 				}
 				canvas.drawText(Integer.toString(ch_scores[0]), W - i
-						* (hot_w / 4) - unit, hot_b1_fy + 20 * unit, paint);
+						* (hot_w / 4) - unit, hot_b1_fy + 20 * unit, paint1);
 
-				paint.setTextSize(12 * unit);
+				paint1.setTextSize(12 * unit);
 				i = 0;
-				j = ch_scores[4];
+				j = ch_scores[2];
 				while (j > 0) {
 					j /= 10;
 					i++;
 				}
 				canvas.drawText(Integer.toString(ch_scores[2]), W - i
-						* (hot_w / 3) - unit, hot_b1_fy + 34 * unit, paint);
+						* (hot_w / 3) - unit, hot_b1_fy + 34 * unit, paint1);
 
-				paint.setTextSize(16 * unit);
+				paint1.setTextSize(16 * unit);
 				i = 0;
 				j = ch_scores[4];
 				while (j > 0) {
@@ -526,243 +573,222 @@ public class LaunchView extends View {
 					i++;
 				}
 				canvas.drawText(Integer.toString(ch_scores[4]), W - i
-						* (hot_w / 2), settings_fy, paint);
+						* (hot_w / 2), settings_fy, paint1);
 
 				break;
 			case 3:
-				paint.setColor(Color.WHITE);
-				paint.setTextSize(4 * unit);
-				paint.setTypeface(Typeface.createFromAsset(root.getAssets(),
-						"fonts/gisha.ttf"));
+				paint2.setTextSize(4 * unit);
 				canvas.drawText("Duel mode stats:", hot_b1_ix + 2 * unit,
-						hot_b1_fy + 6 * unit, paint);
-				paint.setTextSize(3 * unit);
+						hot_b1_fy + 6 * unit, paint2);
+				paint2.setTextSize(3 * unit);
 				canvas.drawText("Initiated ", hot_b1_ix + 4 * unit,
-						acheivements_iy + 2.5f * unit, paint);
+						acheivements_iy + 2.5f * unit, paint2);
 				canvas.drawText("Accepted ", hot_b1_ix + 4 * unit, settings_iy
-						+ 2.5f * unit, paint);
+						+ 2.5f * unit, paint2);
 
-				paint.setColor(Color.rgb(0, 162, 232));
 				canvas.drawText("won :  ", hot_b1_ix + 6 * unit,
-						acheivements_iy + 6.5f * unit, paint);
+						acheivements_iy + 6.5f * unit, paint2);
 				canvas.drawText("keys :  ", hot_b1_ix + 6 * unit,
-						acheivements_iy + 10.5f * unit, paint);
+						acheivements_iy + 10.5f * unit, paint2);
 				canvas.drawText("won :  ", hot_b1_ix + 6 * unit, settings_iy
-						+ 6.5f * unit, paint);
+						+ 6.5f * unit, paint2);
 				canvas.drawText("keys :  ", hot_b1_ix + 6 * unit, settings_iy
-						+ 10.5f * unit, paint);
-				// Bluetooth scores(I'll handle this)
-				// paint.setTextSize(12*unit);
-				// i=0;j=10;
-				// while(j>0){
-				// j/=10;
-				// i++;
-				// }
-				// canvas.drawText(Integer.toString(10),W-i*(hot_w/3),acheivements_fy-8*unit,
-				// paint);
-				//
-				// paint.setTextSize(12*unit);
-				// i=0;j=175;
-				// while(j>0){
-				// j/=10;
-				// i++;
-				// }
-				// canvas.drawText(Integer.toString(175),W-i*(hot_w/3),settings_fy-8*unit,
-				// paint);
+						+ 10.5f * unit, paint2);
+				paint1.setTextSize(12*unit);
+				i=0;j=0;
+				while(j>0){
+					j/=10;
+					i++;
+				}
+			    canvas.drawText(Integer.toString(0),W-i*(hot_w/3),acheivements_fy-8*unit, paint1);
+				
+				paint1.setTextSize(12*unit);
+				i=0;j=0;
+				while(j>0){
+					j/=10;
+					i++;
+				}
+			    canvas.drawText(Integer.toString(0),W-i*(hot_w/3),settings_fy-8*unit,paint1);
 				break;
 			}
 
 			break;
 		case 5:
-			paint.setColor(Color.WHITE);
-			canvas.drawRect(hot_b1_ix + unit, hot_b1_iy + unit, hot_b1_fx
-					- unit, hot_b1_fy - unit, paint);
-			canvas.drawRect(hot_b2_ix + unit, hot_b2_iy + unit, hot_b2_fx
-					- unit, hot_b2_fy - unit, paint);
-			canvas.drawRect(hot_b3_ix + unit, hot_b3_iy + unit, hot_b3_fx
-					- unit, hot_b3_fy - unit, paint);
 			switch (i_widget_pressed) {
 			case 1:
-				paint.setColor(Color.rgb(0, 162, 232));
 				canvas.drawRect(hot_b1_ix, hot_b1_iy, hot_b1_fx, hot_b1_fy,
-						paint);
+						paint2);
 				break;
 			case 2:
-				paint.setColor(Color.rgb(0, 162, 232));
 				canvas.drawRect(hot_b2_ix, hot_b2_iy, hot_b2_fx, hot_b2_fy,
-						paint);
+						paint2);
 				break;
 			case 3:
-				paint.setColor(Color.rgb(0, 162, 232));
 				canvas.drawRect(hot_b3_ix, hot_b3_iy, hot_b3_fx, hot_b3_fy,
-						paint);
-
+						paint2);
 				break;
 			}
-			Bitmap iclassic = BitmapFactory.decodeResource(getResources(),
-					R.drawable.a_classic);
-			Bitmap r_iclassic = getResizedBitmap(iclassic, (int) hot_w,
-					(int) hot_w / 2);
-			canvas.drawBitmap(r_iclassic, hot_b1_ix, hot_b1_iy, null);
 
-			Bitmap ichallenge = BitmapFactory.decodeResource(getResources(),
-					R.drawable.a_challenge);
-			Bitmap r_ichallenge = getResizedBitmap(ichallenge, (int) hot_w,
-					(int) hot_w / 2);
-			canvas.drawBitmap(r_ichallenge, hot_b2_ix, hot_b2_iy, null);
+			canvas.drawBitmap(hot_classic, hot_b1_ix, hot_b1_iy, paint3i);
+			canvas.drawBitmap(hot_challenge, hot_b2_ix, hot_b2_iy, paint3i);
+			canvas.drawBitmap(hot_duel, hot_b3_ix, hot_b3_iy, paint3i);
 
-			Bitmap iduel = BitmapFactory.decodeResource(getResources(),
-					R.drawable.a_duel);
-			Bitmap r_iduel = getResizedBitmap(iduel, (int) hot_w,
-					(int) hot_w / 2);
-			canvas.drawBitmap(r_iduel, hot_b3_ix, hot_b3_iy, null);
-
-			paint.setColor(Color.rgb(153, 217, 234));
 			canvas.drawRect(hot_b1_ix, hot_b1_fy + unit, W - unit, H - unit,
-					paint);
-			paint.setTextSize(3 * unit);
-			paint.setTypeface(Typeface.createFromAsset(root.getAssets(),
-					"fonts/gisha.ttf"));
+					paint3);
+
+			paint2.setTextSize(3 * unit);
 			switch (i_widget_pressed) {
 			case 1:
-				paint.setColor(Color.WHITE);
 				canvas.drawText("Classic mode:", hot_b1_ix + 2 * unit,
-						hot_b1_fy + 5 * unit, paint);
-				paint.setColor(Color.rgb(0, 162, 232));
+						hot_b1_fy + 5 * unit, paint2);
 				canvas.drawText("Grey dot - player", hot_b1_ix + 2 * unit,
-						hot_b1_fy + 11 * unit, paint);
+						hot_b1_fy + 11 * unit, paint2);
 				canvas.drawText("Yellow dot - key", hot_b1_ix + 2 * unit,
-						hot_b1_fy + 14 * unit, paint);
+						hot_b1_fy + 14 * unit, paint2);
 				canvas.drawText("Move grey dot using two fingers", hot_b1_ix
-						+ 2 * unit, hot_b1_fy + 17 * unit, paint);
+						+ 2 * unit, hot_b1_fy + 17 * unit, paint2);
 				canvas.drawText("Use bottom region for horizontal motion",
-						hot_b1_ix + 2 * unit, hot_b1_fy + 20 * unit, paint);
+						hot_b1_ix + 2 * unit, hot_b1_fy + 20 * unit, paint2);
 				canvas.drawText("Use left region for vertical motion",
-						hot_b1_ix + 2 * unit, hot_b1_fy + 23 * unit, paint);
+						hot_b1_ix + 2 * unit, hot_b1_fy + 23 * unit, paint2);
 				canvas.drawText("Do NOT touch the walls of the maze", hot_b1_ix
-						+ 2 * unit, hot_b1_fy + 26 * unit, paint);
+						+ 2 * unit, hot_b1_fy + 26 * unit, paint2);
 				canvas.drawText("Collect yellow keys to increment score/life",
-						hot_b1_ix + 2 * unit, hot_b1_fy + 32 * unit, paint);
+						hot_b1_ix + 2 * unit, hot_b1_fy + 32 * unit, paint2);
 				canvas.drawText("Lives get costlier each time you loose one",
-						hot_b1_ix + 2 * unit, hot_b1_fy + 35 * unit, paint);
+						hot_b1_ix + 2 * unit, hot_b1_fy + 35 * unit, paint2);
 				canvas.drawText("Score increases only if you have a life",
-						hot_b1_ix + 2 * unit, hot_b1_fy + 38 * unit, paint);
+						hot_b1_ix + 2 * unit, hot_b1_fy + 38 * unit, paint2);
 				canvas.drawText("Touch on grey dot to set a teleport point",
-						hot_b1_ix + 2 * unit, hot_b1_fy + 44 * unit, paint);
+						hot_b1_ix + 2 * unit, hot_b1_fy + 44 * unit, paint2);
 				canvas.drawText("Touch on it again to teleport back!",
-						hot_b1_ix + 2 * unit, hot_b1_fy + 47 * unit, paint);
+						hot_b1_ix + 2 * unit, hot_b1_fy + 47 * unit, paint2);
 				break;
 			case 2:
-				paint.setColor(Color.WHITE);
 				canvas.drawText("Challenge mode:", hot_b1_ix + 2 * unit,
-						hot_b1_fy + 5 * unit, paint);
-				paint.setColor(Color.rgb(0, 162, 232));
+						hot_b1_fy + 5 * unit, paint2);
 				canvas.drawText("Grey dot - player", hot_b1_ix + 2 * unit,
-						hot_b1_fy + 11 * unit, paint);
+						hot_b1_fy + 11 * unit, paint2);
 				canvas.drawText("Orange dot - opponent(pc)", hot_b1_ix + 2
-						* unit, hot_b1_fy + 14 * unit, paint);
+						* unit, hot_b1_fy + 14 * unit, paint2);
 				canvas.drawText("Move grey dot using two fingers", hot_b1_ix
-						+ 2 * unit, hot_b1_fy + 17 * unit, paint);
+						+ 2 * unit, hot_b1_fy + 17 * unit, paint2);
 				canvas.drawText("Use bottom region for horizontal motion",
-						hot_b1_ix + 2 * unit, hot_b1_fy + 20 * unit, paint);
+						hot_b1_ix + 2 * unit, hot_b1_fy + 20 * unit, paint2);
 				canvas.drawText("Use left region for vertical motion",
-						hot_b1_ix + 2 * unit, hot_b1_fy + 23 * unit, paint);
+						hot_b1_ix + 2 * unit, hot_b1_fy + 23 * unit, paint2);
 				canvas.drawText("Do NOT touch the walls of the maze", hot_b1_ix
-						+ 2 * unit, hot_b1_fy + 26 * unit, paint);
+						+ 2 * unit, hot_b1_fy + 26 * unit, paint2);
 				canvas.drawText("Your destination is opponent's initial point",
-						hot_b1_ix + 2 * unit, hot_b1_fy + 32 * unit, paint);
+						hot_b1_ix + 2 * unit, hot_b1_fy + 32 * unit, paint2);
 				canvas.drawText("Opponent's destination is your initial point",
-						hot_b1_ix + 2 * unit, hot_b1_fy + 35 * unit, paint);
+						hot_b1_ix + 2 * unit, hot_b1_fy + 35 * unit, paint2);
 				canvas.drawText("The challenge starts once you start!",
-						hot_b1_ix + 2 * unit, hot_b1_fy + 38 * unit, paint);
+						hot_b1_ix + 2 * unit, hot_b1_fy + 38 * unit, paint2);
 				break;
 			case 3:
-				paint.setColor(Color.WHITE);
 				canvas.drawText("Duel mode:", hot_b1_ix + 2 * unit, hot_b1_fy
-						+ 5 * unit, paint);
-				paint.setColor(Color.rgb(0, 162, 232));
+						+ 5 * unit, paint2);
 				canvas.drawText("Grey dot - player", hot_b1_ix + 2 * unit,
-						hot_b1_fy + 11 * unit, paint);
+						hot_b1_fy + 11 * unit, paint2);
 				canvas.drawText("Orange dot - opponent", hot_b1_ix + 2 * unit,
-						hot_b1_fy + 14 * unit, paint);
+						hot_b1_fy + 14 * unit, paint2);
 				canvas.drawText("Move grey dot using two fingers", hot_b1_ix
-						+ 2 * unit, hot_b1_fy + 17 * unit, paint);
+						+ 2 * unit, hot_b1_fy + 17 * unit, paint2);
 				canvas.drawText("Use bottom region for horizontal motion",
-						hot_b1_ix + 2 * unit, hot_b1_fy + 20 * unit, paint);
+						hot_b1_ix + 2 * unit, hot_b1_fy + 20 * unit, paint2);
 				canvas.drawText("Use left region for vertical motion",
-						hot_b1_ix + 2 * unit, hot_b1_fy + 23 * unit, paint);
+						hot_b1_ix + 2 * unit, hot_b1_fy + 23 * unit, paint2);
 				canvas.drawText("Do NOT touch the walls of the maze", hot_b1_ix
-						+ 2 * unit, hot_b1_fy + 26 * unit, paint);
+						+ 2 * unit, hot_b1_fy + 26 * unit, paint2);
 				canvas.drawText("Enable bluetooth", hot_b1_ix + 2 * unit,
-						hot_b1_fy + 32 * unit, paint);
+						hot_b1_fy + 32 * unit, paint2);
 				canvas.drawText("Make device discoverable", hot_b1_ix + 2
-						* unit, hot_b1_fy + 35 * unit, paint);
+						* unit, hot_b1_fy + 35 * unit, paint2);
 				canvas.drawText("Search for opponent device", hot_b1_ix + 2
-						* unit, hot_b1_fy + 38 * unit, paint);
+						* unit, hot_b1_fy + 38 * unit, paint2);
 				canvas.drawText("Select opponent device to start duel!",
-						hot_b1_ix + 2 * unit, hot_b1_fy + 41 * unit, paint);
+						hot_b1_ix + 2 * unit, hot_b1_fy + 41 * unit, paint2);
 				break;
 			}
 			break;
 		case 6:
-			paint.setColor(Color.rgb(0, 162, 232));
+			canvas.drawRect(hot_b1_ix + unit, hot_b1_iy + unit, hot_b1_fx
+					- unit, hot_b1_fy - unit, paint2);
 			canvas.drawRect(hot_b2_ix + unit, hot_b2_iy + unit, hot_b2_fx
-					- unit, hot_b2_fy - unit, paint);
+					- unit, hot_b2_fy - unit, paint2);
 			canvas.drawRect(hot_b3_ix + unit, hot_b3_iy + unit, hot_b3_fx
-					- unit, hot_b3_fy - unit, paint);
+					- unit, hot_b3_fy - unit, paint2);
 			if (MazeConstants.SIZE) {
-				Bitmap large = BitmapFactory.decodeResource(getResources(),
-						R.drawable.large);
-				Bitmap r_large = getResizedBitmap(large, (int) hot_w,
-						(int) hot_w / 2);
-				canvas.drawBitmap(r_large, hot_b1_ix, hot_b1_iy, null);
+				canvas.drawBitmap(large, hot_b1_ix, hot_b1_iy, paint3i);
 			} else {
-				Bitmap small = BitmapFactory.decodeResource(getResources(),
-						R.drawable.small);
-				Bitmap r_small = getResizedBitmap(small, (int) hot_w,
-						(int) hot_w / 2);
-				canvas.drawBitmap(r_small, hot_b1_ix, hot_b1_iy, null);
+				canvas.drawBitmap(small, hot_b1_ix, hot_b1_iy, paint3i);
 			}
 
-			if (!MazeConstants.TONE) {
-				paint.setColor(Color.WHITE);
+			if (MazeConstants.TONE) {
 				canvas.drawRect(hot_b2_ix + unit, hot_b2_iy + unit, hot_b2_fx
-						- unit, hot_b2_fy - unit, paint);
+						- unit, hot_b2_fy - unit, paint2);
 			}
-			if (!MazeConstants.VIBRATION) {
-				paint.setColor(Color.WHITE);
+			if (MazeConstants.VIBRATION) {
 				canvas.drawRect(hot_b3_ix + unit, hot_b3_iy + unit, hot_b3_fx
-						- unit, hot_b3_fy - unit, paint);
+						- unit, hot_b3_fy - unit, paint2);
 			}
+			canvas.drawBitmap(tone, hot_b2_ix, hot_b2_iy, paint3i);
+			canvas.drawBitmap(vibration, hot_b3_ix, hot_b3_iy, paint3i);
 
-			Bitmap tone = BitmapFactory.decodeResource(getResources(),
-					R.drawable.tone);
-			Bitmap r_tone = getResizedBitmap(tone, (int) hot_w, (int) hot_w / 2);
-			canvas.drawBitmap(r_tone, hot_b2_ix, hot_b2_iy, null);
+			if (share_pressed) {
+				canvas.drawRect(hot_b1_ix + unit, settings_fy - hot_w / 2
+						+ unit, hot_b1_fx - unit, settings_fy - unit, paint2);
+			}
+			canvas.drawBitmap(share, hot_b1_ix, settings_fy - hot_w / 2,
+					paint3i);
 
-			Bitmap vibration = BitmapFactory.decodeResource(getResources(),
-					R.drawable.vibration);
-			Bitmap r_vibration = getResizedBitmap(vibration, (int) hot_w,
-					(int) hot_w / 2);
-			canvas.drawBitmap(r_vibration, hot_b3_ix, hot_b3_iy, null);
-
-			paint.setColor(Color.rgb(153, 217, 234));
-			canvas.drawRect(hot_b1_ix, hot_b1_fy + unit, W - unit, H - unit,
-					paint);
-			paint.setColor(Color.WHITE);
-			paint.setTextSize(3 * unit);
-			paint.setTypeface(Typeface.createFromAsset(root.getAssets(),
-					"fonts/gisha.ttf"));
+			if (rate_pressed) {
+				canvas.drawRect(hot_b2_ix + unit, settings_fy - hot_w / 2
+						+ unit, hot_b2_fx - unit, settings_fy - unit, paint2);
+			}
+			canvas.drawBitmap(rate, hot_b2_ix, settings_fy - hot_w / 2, paint3i);
+			switch (MazeConstants.COLOR) {
+			case 0:
+				paint.setColor(Color.rgb(247, 172, 213));
+				canvas.drawRect(hot_b3_ix + unit, settings_fy - hot_w / 2
+						+ unit, W - 2 * unit, H - 2 * unit, paint);
+				break;
+			case 1:
+				paint.setColor(Color.rgb(165, 134, 191));
+				canvas.drawRect(hot_b3_ix + unit, settings_fy - hot_w / 2
+						+ unit, W - 2 * unit, H - 2 * unit, paint);
+				break;
+			case 2:
+				paint.setColor(Color.rgb(232, 208, 182));
+				canvas.drawRect(hot_b3_ix + unit, settings_fy - hot_w / 2
+						+ unit, W - 2 * unit, H - 2 * unit, paint);
+				break;
+			case 3:
+				paint.setColor(Color.rgb(147, 149, 152));
+				canvas.drawRect(hot_b3_ix + unit, settings_fy - hot_w / 2
+						+ unit, W - 2 * unit, H - 2 * unit, paint);
+				break;
+			case 4:
+				paint.setColor(Color.rgb(108, 185, 225));
+				canvas.drawRect(hot_b3_ix + unit, settings_fy - hot_w / 2
+						+ unit, W - 2 * unit, H - 2 * unit, paint);
+				break;
+			}
+			canvas.drawBitmap(theme, hot_b3_ix, settings_fy - hot_w / 2,
+					paint3i);
+			canvas.drawRect(hot_b1_ix, hot_b1_fy + unit, hot_b3_fx, H - hot_w
+					/ 2 - 2 * unit, paint3);
+			paint2.setTextSize(3 * unit);
 			canvas.drawText(" Developed by:", hot_b1_ix
-					+ (W - 4 * unit - 2 * sel_w) / 2 - unit * 14, hot_b1_fy + 6
-					* unit + (H - unit - hot_w) / 2 - 5 * unit, paint);
-			paint.setColor(Color.rgb(0, 162, 232));
-			canvas.drawText("adityaphilip", hot_b1_ix
-					+ (W - 4 * unit - 2 * sel_w) / 2 - unit * 10, hot_b1_fy + 6
-					* unit + (H - unit - hot_w) / 2, paint);
+					+ (W - 4 * unit - 2 * sel_w) / 2 - unit * 14, hot_b1_fy
+					+ unit + (H - unit - hot_w) / 2 - 5 * unit, paint2);
+			canvas.drawText("adithyaphilip", hot_b1_ix
+					+ (W - 4 * unit - 2 * sel_w) / 2 - unit * 10, hot_b1_fy
+					+ unit + (H - unit - hot_w) / 2, paint2);
 			canvas.drawText("dpkm95", hot_b1_ix + (W - 4 * unit - 2 * sel_w)
-					/ 2 - unit * 10, hot_b1_fy + 6 * unit + (H - unit - hot_w)
-					/ 2 + 5 * unit, paint);
+					/ 2 - unit * 10, hot_b1_fy + unit + (H - unit - hot_w) / 2
+					+ 5 * unit, paint2);
 			break;
 		}
 	}
@@ -881,12 +907,29 @@ public class LaunchView extends View {
 				if (hot_b3_ix < event.getX() && event.getX() < hot_b3_fx
 						&& hot_b3_iy < event.getY() && event.getY() < hot_b3_fy)
 					MazeConstants.VIBRATION = !MazeConstants.VIBRATION;
+				if (hot_b1_ix < event.getX() && event.getX() < hot_b1_fx
+						&& settings_fy - hot_w / 2 < event.getY()
+						&& event.getY() < settings_fy) {
+					share_pressed = true;
+
+				}
+				if (hot_b2_ix < event.getX() && event.getX() < hot_b2_fx
+						&& settings_fy - hot_w / 2 < event.getY()
+						&& event.getY() < settings_fy) {
+					rate_pressed = true;
+
+				}
+				if (hot_b3_ix < event.getX() && event.getX() < hot_b3_fx
+						&& settings_fy - hot_w / 2 < event.getY()
+						&& event.getY() < H - unit) {
+					MazeConstants.COLOR = (MazeConstants.COLOR + 1) % 5;
+					changeColor();
+				}
 				break;
 			}
 			break;
 		}
 		case MotionEvent.ACTION_MOVE:
-			break;
 		case MotionEvent.ACTION_UP:
 		case MotionEvent.ACTION_POINTER_UP: {
 			switch (selection) {
@@ -921,6 +964,7 @@ public class LaunchView extends View {
 				}
 				break;
 			case 3:
+				/*
 				mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
 
 				// If the adapter is null, then Bluetooth is not supported
@@ -932,6 +976,7 @@ public class LaunchView extends View {
 				}
 				Intent i = new Intent(m_context, ConnectActivity.class);
 				root.startActivity(i);
+
 				if (hot_b1_ix < event.getX() && event.getX() < hot_b1_fx
 						&& hot_b1_iy < event.getY() && event.getY() < hot_b1_fy
 						&& bluetooth_pressed) {
@@ -943,10 +988,11 @@ public class LaunchView extends View {
 								REQUEST_ENABLE_BT);
 						// Otherwise, setup the chat session
 					} else {
-						/*if (ConnectActivity.mChatService == null)
-							// setupChat();
-							ConnectActivity.mChatService = new BluetoothChatService(root,
-									ConnectActivity.mHandler);*/
+						
+						 if (ConnectActivity.mChatService == null) //
+						 setupChat(); ConnectActivity.mChatService = new
+						 BluetoothChatService(root, ConnectActivity.mHandler);
+						 
 					}
 				}
 				if (hot_b2_ix < event.getX() && event.getX() < hot_b2_fx
@@ -981,12 +1027,42 @@ public class LaunchView extends View {
 					root.startActivityForResult(serverIntent,
 							REQUEST_CONNECT_DEVICE);
 				}
+				*/
 				break;
 			case 4:
 				break;
 			case 5:
 				break;
 			case 6:
+				if (hot_b1_ix < event.getX() && event.getX() < hot_b1_fx
+						&& settings_fy - hot_w / 2 < event.getY()
+						&& event.getY() < settings_fy && share_pressed) {
+					share_pressed = false;
+					root.shareDialog();
+					// Intent sendIntent = new Intent();
+					// sendIntent.setAction(Intent.ACTION_SEND);
+					// sendIntent.putExtra(Intent.EXTRA_TEXT,
+					// "Maze Challenge:\nMy top score: "+Archiver.get_top_score(root)+"\nBeat that!\nhttp://play.google.com/store/apps/details?id="
+					// + root.getPackageName());
+					// sendIntent.setType("text/plain");
+					// root.startActivity(sendIntent);
+				}
+				if (hot_b2_ix < event.getX() && event.getX() < hot_b2_fx
+						&& settings_fy - hot_w / 2 < event.getY()
+						&& event.getY() < settings_fy && rate_pressed) {
+					rate_pressed = false;
+					Uri uri = Uri.parse("market://details?id="
+							+ root.getPackageName());
+					Intent goToMarket = new Intent(Intent.ACTION_VIEW, uri);
+					try {
+						root.startActivity(goToMarket);
+					} catch (ActivityNotFoundException e) {
+						root.startActivity(new Intent(
+								Intent.ACTION_VIEW,
+								Uri.parse("http://play.google.com/store/apps/details?id="
+										+ root.getPackageName())));
+					}
+				}
 				break;
 			}
 			challenge_pressed = false;
