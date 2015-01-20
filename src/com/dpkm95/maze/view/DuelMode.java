@@ -197,9 +197,9 @@ public class DuelMode extends View {
 
 	private void paintMaze(Canvas canvas) {
 		float px = mazeX, py = mazeY;
-		for (int i = 0; i < mRows; i++) {
+		for (int i = 0; i < mCols; i++) {
 			// print horizontal lines
-			for (int j = 0; j < mCols; j++) {
+			for (int j = 0; j < mRows; j++) {
 				if ((mMaze[j][i] & 1) == 0) {
 					checkCollision(px, py, false);
 					canvas.drawRect(px, py, px + 5 * unit, py + unit, paint1);
@@ -212,7 +212,7 @@ public class DuelMode extends View {
 			canvas.drawRect(px, py, px + unit, py + unit, paint1);
 			px = mazeX;
 			// print vertical lines
-			for (int j = 0; j < mCols; j++) {
+			for (int j = 0; j < mRows; j++) {
 				if ((mMaze[j][i] & 8) == 0) {
 					checkCollision(px, py, true);
 					canvas.drawRect(px, py, px + unit, py + 5 * unit, paint1);
@@ -227,12 +227,12 @@ public class DuelMode extends View {
 			px = mazeX;
 		}
 		// print bottom line
-		for (int i = 0; i < mCols; ++i) {
+		for (int i = 0; i < mRows; ++i) {
 			checkCollision(px + 5 * i * unit, py, false);
 			canvas.drawRect(px + 5 * i * unit, py, px + 5 * (i + 1) * unit, py
 					+ unit, paint1);
 		}
-		canvas.drawRect(px + 5 * mCols * unit, py, px + 5 * mCols * unit + unit,
+		canvas.drawRect(px + 5 * mRows * unit, py, px + 5 * mRows * unit + unit,
 				py + unit, paint1);
 	}
 
