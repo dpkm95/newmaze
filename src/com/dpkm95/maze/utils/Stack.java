@@ -78,6 +78,19 @@ public class Stack {
 		}
 	}
 	
+	public void reverse(){		
+		if(head==null || head.next==null)
+			return;
+		Node prev=null,next=null,cur=head;
+		while(cur!=null){
+			next=cur.next;
+			cur.next=prev;
+			prev=cur;
+			cur=next;
+		}
+		head = prev;		
+	}
+	
 	public void dec_size(){
 		size--;
 	}

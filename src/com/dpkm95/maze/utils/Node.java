@@ -2,8 +2,8 @@ package com.dpkm95.maze.utils;
 
 //Node of Stack
 public class Node {
-	private Node next;
-	private int x, y;
+	Node next;
+	int x, y;
 
 	public Node(int i, int j, Node n) {
 		x = i;

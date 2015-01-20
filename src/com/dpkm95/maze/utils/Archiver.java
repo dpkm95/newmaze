@@ -12,6 +12,7 @@ import com.dpkm95.maze.activity.ClassicActivity;
 import com.dpkm95.maze.activity.ClassicResumeActivity;
 import com.dpkm95.maze.activity.MainActivity;
 import android.content.Context;
+import android.util.Log;
 
 public class Archiver {
 	public static void save_classic_score(ClassicActivity root, int score) {
@@ -41,7 +42,6 @@ public class Archiver {
 				fOut.write(top_scores.getBytes());
 				fOut.close();
 			} catch (Exception e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		} else {
@@ -51,7 +51,48 @@ public class Archiver {
 				fOut.write(top_scores.getBytes());
 				fOut.close();
 			} catch (Exception e) {
-				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+	}
+	
+	public static void save_classic_score(ClassicResumeActivity root, int score) {		
+		String scores = read_classic_score(root);
+		List<String> score_list = Arrays.asList(scores.split(","));
+		int[] temp = new int[6];
+		for (int i = 0; i < 5; ++i) {
+			temp[i] = Integer.parseInt(score_list.get(i));
+		}
+
+		for (int i = 0; i < 5; ++i) {
+			if (temp[i] == score)
+				return;
+		}
+
+		temp[5] = score;
+		Arrays.sort(temp);
+
+		String top_scores = "";
+		for (int i = 1; i < 6; ++i) {
+			top_scores += Integer.toString(temp[i]) + ",";
+		}
+		if (MazeConstants.SIZE) {
+			try {
+				FileOutputStream fOut = root.openFileOutput(
+						"large_classic_scores", Context.MODE_PRIVATE);
+				fOut.write(top_scores.getBytes());
+				fOut.close();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		} else {
+			try {
+				
+				FileOutputStream fOut = root.openFileOutput(
+						"small_classic_scores", Context.MODE_PRIVATE);
+				fOut.write(top_scores.getBytes());
+				fOut.close();
+			} catch (Exception e) {
 				e.printStackTrace();
 			}
 		}
@@ -93,7 +134,6 @@ public class Archiver {
 				fOut.write(score_card.getBytes());
 				fOut.close();
 			} catch (Exception e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		} else {
@@ -103,7 +143,6 @@ public class Archiver {
 				fOut.write(score_card.getBytes());
 				fOut.close();
 			} catch (Exception e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		}
@@ -331,7 +370,6 @@ public class Archiver {
 			fOut.write(key.getBytes());
 			fOut.close();
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
@@ -373,7 +411,6 @@ public class Archiver {
 			fOut.write(key.getBytes());
 			fOut.close();
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
@@ -415,50 +452,7 @@ public class Archiver {
 
 		}
 		return o;
-	}
-
-	public static void save_classic_score(ClassicResumeActivity root, int score) {
-		String scores = read_classic_score(root);
-		List<String> score_list = Arrays.asList(scores.split(","));
-		int[] temp = new int[6];
-		for (int i = 0; i < 5; ++i) {
-			temp[i] = Integer.parseInt(score_list.get(i));
-		}
-
-		for (int i = 0; i < 5; ++i) {
-			if (temp[i] == score)
-				return;
-		}
-
-		temp[5] = score;
-		Arrays.sort(temp);
-
-		String top_scores = "";
-		for (int i = 1; i < 6; ++i) {
-			top_scores += Integer.toString(temp[i]) + ",";
-		}
-		if (MazeConstants.SIZE) {
-			try {
-				FileOutputStream fOut = root.openFileOutput(
-						"large_classic_scores", Context.MODE_PRIVATE);
-				fOut.write(top_scores.getBytes());
-				fOut.close();
-			} catch (Exception e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		} else {
-			try {
-				FileOutputStream fOut = root.openFileOutput(
-						"small_classic_scores", Context.MODE_PRIVATE);
-				fOut.write(top_scores.getBytes());
-				fOut.close();
-			} catch (Exception e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		}
-	}
+	}	
 
 	private static String read_classic_score(ClassicResumeActivity root) {
 		if (MazeConstants.SIZE) {
@@ -503,7 +497,6 @@ public class Archiver {
 			fOut.write(constants.getBytes());
 			fOut.close();
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}

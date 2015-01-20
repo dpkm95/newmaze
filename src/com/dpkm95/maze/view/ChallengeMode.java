@@ -24,18 +24,17 @@ import com.dpkm95.maze.utils.MazeGenerator;
 
 @SuppressLint("DrawAllocation")
 public class ChallengeMode extends View {
-	private SparseArray<PointF> mActivePointers;
 	private Paint paint, paint0, paint1, paint2, paint2i, paint3, paint3i;
 	private float W, H;
 	private float ballX, ballY, ballXf, ballYf;
 	private int x, y,delay=0;
 	private int state = MazeConstants.STATE_PLAY;
-	private float mazeX, mazeY, mazeXf, mazeYf;
+	private float mazeX, mazeY, mazeXf, mazeYf,control_width;
 	private float unit;
 	private MazeGenerator mg;
 	private int[][] maze;
 	private LongestPathFinder lpf;
-	private Stack retPath, keys;
+	private Stack retPath, fwPath, keys;
 	private int destX, destY;
 	private int oppSpeed,total_path_length;
 	private boolean archive;
@@ -65,7 +64,6 @@ public class ChallengeMode extends View {
 			unit = (float) ((H * 0.8) / (y * 5.5));
 		}
 
-		mActivePointers = new SparseArray<PointF>();
 		vibrator = (Vibrator) context
 				.getSystemService(Context.VIBRATOR_SERVICE);
 		mp_win = MediaPlayer.create(context, com.dpkm95.maze.R.raw.win);
@@ -83,15 +81,20 @@ public class ChallengeMode extends View {
 			break;
 		}
 		mazeX = (W - (unit * 5 * x + unit)) / 2;
-		mazeY = 2 * unit;
+		mazeY = unit;
 		mazeXf = mazeX + unit * 5 * x + unit;
 		mazeYf = mazeY + unit * 5 * y + unit;
+		control_width = (H-mazeYf);
 		archive = true;
 
 		mg = new MazeGenerator(x, y);
 		maze = mg.getMaze();
 		lpf = new LongestPathFinder(maze, x, y);
 		retPath = lpf.getLongestPath();
+		fwPath = new Stack();
+		fwPath.copy(retPath);		
+		fwPath.reverse();
+		fwPath.pop();
 		total_path_length = retPath.getSize(); 
 		keys = lpf.getEndPoints();
 
@@ -154,10 +157,10 @@ public class ChallengeMode extends View {
 			paint3.setColor(Color.rgb(201, 202, 204));
 			break;
 		}
-		up = new GameControl(this, unit, 0);
-		down = new GameControl(this, unit, 1);
-		left = new GameControl(this, unit, 2);
-		right = new GameControl(this, unit, 3);
+		up = new GameControl(this, unit, 0, control_width);
+		down = new GameControl(this, unit, 1,control_width);
+		left = new GameControl(this, unit, 2,control_width);
+		right = new GameControl(this, unit, 3,control_width);
 	}
 
 	public void onDraw(Canvas canvas) {
@@ -301,38 +304,39 @@ public class ChallengeMode extends View {
 		canvas.drawRect(mazeXf, mazeY, W, H, paint1);
 		canvas.drawRect(mazeX, mazeYf, W, H, paint1);
 		paint0.setTextSize(3 * unit);
-		canvas.drawText("Me:", mazeXf + (W - mazeXf) / 2
-				- (float) (4.5 * unit), mazeY + 4 * unit, paint0);
-		canvas.drawText(Integer.toString((int)(player.path_covered*100/total_path_length))+"%", mazeXf + (W - mazeXf)
-				/ 2 - (float) (4.5 * unit), mazeY + 8 * unit, paint0);
 		canvas.drawText("Opp:", mazeXf + (W - mazeXf) / 2
-				- (float) (4.5 * unit), mazeY + 16 * unit, paint0);
+				- (float) (4.5 * unit), mazeY + 4 * unit, paint0);
 		canvas.drawText(Integer.toString((int)(opponent.path_covered*100/total_path_length))+"%", mazeXf
-				+ (W - mazeXf) / 2 - (float) (4.5 * unit), mazeY + 20 * unit,
+				+ (W - mazeXf) / 2 - (float) (4.5 * unit), mazeY + 8 * unit,
 				paint0);
+		if(MazeConstants.DIFFICULTY==1){
+			canvas.drawText("Me:", mazeXf + (W - mazeXf) / 2
+					- (float) (4.5 * unit), mazeY + 16 * unit, paint0);
+			canvas.drawText(Integer.toString((int)(player.path_covered*100/total_path_length))+"%", mazeXf + (W - mazeXf)
+					/ 2 - (float) (4.5 * unit), mazeY + 20 * unit, paint0);
+		}
 	}
 
 	private void paintGameControls(Canvas canvas) {
 		if (up.pressed)
-			canvas.drawBitmap(up.image, 0, H - 38 * unit, paint3i);
+			canvas.drawBitmap(up.image, 0, H - 3*control_width, paint3i);
 		else
-			canvas.drawBitmap(up.image, 0, H - 38 * unit, paint2i);
+			canvas.drawBitmap(up.image, 0, H - 3*control_width, paint2i);
 		if (down.pressed)
-			canvas.drawBitmap(down.image, 0, H - 14 * unit, paint3i);
+			canvas.drawBitmap(down.image, 0, H - control_width , paint3i);
 		else
-			canvas.drawBitmap(down.image, 0, H - 14 * unit, paint2i);
+			canvas.drawBitmap(down.image, 0, H - control_width , paint2i);
 		if (left.pressed)
-			canvas.drawBitmap(left.image, W - 38 * unit, H - 12 * unit, paint3i);
+			canvas.drawBitmap(left.image, W - 3*control_width , H -control_width , paint3i);
 		else
-			canvas.drawBitmap(left.image, W - 38 * unit, H - 12 * unit, paint2i);
+			canvas.drawBitmap(left.image, W - 3*control_width, H - control_width, paint2i);
 		if (right.pressed)
-			canvas.drawBitmap(right.image, W - 14 * unit, H - 12 * unit,
+			canvas.drawBitmap(right.image, W - control_width, H - control_width,
 					paint3i);
 		else
-			canvas.drawBitmap(right.image, W - 14 * unit, H - 12 * unit,
+			canvas.drawBitmap(right.image, W - control_width, H - control_width,
 					paint2i);
 	}
-
 
 	private void paintOpponentDestination(Canvas canvas) {
 		paint.setColor(Color.rgb(255, 168, 111));
@@ -349,6 +353,10 @@ public class ChallengeMode extends View {
 		// reached end point
 		player.x = player.fx;
 		player.y = player.fy;
+		if(player.x == fwPath.topX() && player.y == fwPath.topY()){			
+			player.path_covered+=1;			
+			fwPath.pop();
+		}
 		if (player.x == destX && player.y == destY)
 			state = MazeConstants.STATE_WIN;
 		paint.setColor(Color.GRAY);
@@ -404,46 +412,35 @@ public class ChallengeMode extends View {
 
 	@Override
 	public boolean onTouchEvent(MotionEvent event) {
-		int pointerIndex = event.getActionIndex();
-		int pointerId = event.getPointerId(pointerIndex);
 		int maskedAction = event.getActionMasked();
 		switch (maskedAction) {
 		case MotionEvent.ACTION_DOWN:
 		case MotionEvent.ACTION_POINTER_DOWN:
-			if (event.getX() < mazeX) {
-				if (H - 40 * unit < event.getY()
-						&& event.getY() < H - 21 * unit) {
+			if (event.getX() < control_width) {
+				if (H - 3*control_width < event.getY()
+						&& event.getY() < H - 2*control_width) {
 					up.pressed = true;
 					player.fy -= 1;
-					player.path_covered+=1;
-				} else if (H - 16 * unit < event.getY() && event.getY() < H) {
+				} else if (H - control_width < event.getY() && event.getY() < H) {
 					down.pressed = true;
 					player.fy += 1;
-					player.path_covered+=1;
 				}
-			} else if (event.getY() > mazeYf) {
-				if (W - 40 * unit < event.getX()
-						&& event.getX() < W - 21 * unit) {
+			} else if (event.getY() > H-control_width) {
+				if (W - 3*control_width < event.getX()
+						&& event.getX() < W - 2*control_width) {
 					left.pressed = true;
 					player.fx -= 1;
-					player.path_covered+=1;
-				} else if (W - 16 * unit < event.getX() && event.getX() < W) {
+				} else if (W - control_width < event.getX() && event.getX() < W) {
 					right.pressed = true;
 					player.fx += 1;
-					player.path_covered+=1;
 				}
 			}
-			PointF f = new PointF();
-			f.x = event.getX(pointerIndex);
-			f.y = event.getY(pointerIndex);
-			mActivePointers.put(pointerId, f);
 			break;
 		case MotionEvent.ACTION_MOVE:
 		case MotionEvent.ACTION_UP:
 		case MotionEvent.ACTION_POINTER_UP:
 		case MotionEvent.ACTION_CANCEL:
 			up.pressed = down.pressed = left.pressed = right.pressed = false;
-			mActivePointers.remove(pointerId);
 			break;
 		}
 		invalidate();

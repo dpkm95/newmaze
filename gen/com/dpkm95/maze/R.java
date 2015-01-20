@@ -498,9 +498,11 @@ containing a value of this type.
     public static final class id {
         public static final int bottom=0x7f050006;
         public static final int box_count=0x7f050005;
+        public static final int btn_no=0x7f05002b;
+        public static final int btn_yes=0x7f05002a;
         public static final int button=0x7f050004;
-        public static final int button_scan=0x7f05002d;
-        public static final int button_send=0x7f050031;
+        public static final int button_scan=0x7f050030;
+        public static final int button_send=0x7f050034;
         public static final int center=0x7f050009;
         public static final int com_facebook_body_frame=0x7f050021;
         public static final int com_facebook_button_xout=0x7f050023;
@@ -527,27 +529,28 @@ containing a value of this type.
         public static final int com_facebook_usersettingsfragment_login_button=0x7f050028;
         public static final int com_facebook_usersettingsfragment_logo_image=0x7f050026;
         public static final int com_facebook_usersettingsfragment_profile_name=0x7f050027;
-        public static final int connect_scan=0x7f050032;
+        public static final int connect_scan=0x7f050035;
         public static final int container=0x7f05000e;
-        public static final int discoverable=0x7f050033;
-        public static final int edit_text_out=0x7f050030;
-        public static final int in=0x7f05002f;
+        public static final int discoverable=0x7f050036;
+        public static final int edit_text_out=0x7f050033;
+        public static final int in=0x7f050032;
         public static final int inline=0x7f050007;
-        public static final int instructions=0x7f05002e;
+        public static final int instructions=0x7f050031;
         public static final int large=0x7f050002;
         public static final int left=0x7f05000a;
-        public static final int new_devices=0x7f05002c;
+        public static final int new_devices=0x7f05002f;
         public static final int normal=0x7f050001;
-        public static final int paired_devices=0x7f05002a;
+        public static final int paired_devices=0x7f05002d;
         public static final int picker_subtitle=0x7f05001e;
         public static final int right=0x7f05000b;
         public static final int small=0x7f050000;
         public static final int standard=0x7f050003;
         public static final int textView1=0x7f05000c;
-        public static final int title_new_devices=0x7f05002b;
-        public static final int title_paired_devices=0x7f050029;
+        public static final int title_new_devices=0x7f05002e;
+        public static final int title_paired_devices=0x7f05002c;
         public static final int top=0x7f050008;
         public static final int tv=0x7f05000d;
+        public static final int txt_dia=0x7f050029;
     }
     public static final class layout {
         public static final int achievements=0x7f030000;
@@ -570,11 +573,12 @@ containing a value of this type.
         public static final int com_facebook_search_bar_layout=0x7f030011;
         public static final int com_facebook_tooltip_bubble=0x7f030012;
         public static final int com_facebook_usersettingsfragment=0x7f030013;
-        public static final int device_list=0x7f030014;
-        public static final int device_name=0x7f030015;
-        public static final int instructions=0x7f030016;
-        public static final int main=0x7f030017;
-        public static final int message=0x7f030018;
+        public static final int custom_dialog=0x7f030014;
+        public static final int device_list=0x7f030015;
+        public static final int device_name=0x7f030016;
+        public static final int instructions=0x7f030017;
+        public static final int main=0x7f030018;
+        public static final int message=0x7f030019;
     }
     public static final class menu {
         public static final int main=0x7f0a0000;

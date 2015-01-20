@@ -1,12 +1,9 @@
 package com.dpkm95.maze.view;
 
-import com.dpkm95.maze.R;
 import com.dpkm95.maze.activity.FlexibleMazeActivity;
 import com.dpkm95.maze.utils.*;
 import android.annotation.SuppressLint;
 import android.content.Context;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.LightingColorFilter;
@@ -22,7 +19,6 @@ import android.util.SparseArray;
 import android.view.MotionEvent;
 import android.view.View;
 
-import com.dpkm95.maze.utils.BitmapTransformer;
 import com.dpkm95.maze.utils.GameControl;
 import com.dpkm95.maze.utils.MazeConstants;
 import com.dpkm95.maze.utils.Node;
@@ -31,13 +27,12 @@ import com.dpkm95.maze.utils.Stack;
 @SuppressLint("ViewConstructor")
 public class DuelMode extends View {	
 	private int mClickCtr = 0;
-	private SparseArray<PointF> mActivePointers;
 	private Paint paint, paint0, paint1, paint2, paint2i, paint3, paint3i;
 	private float W, H;
 	private float ballX, ballY,ballXf,ballYf;
 	private int mCols, mRows;
 	private int mGameState = MazeConstants.STATE_PLAY;
-	private float mazeX, mazeY, mazeXf, mazeYf;
+	private float mazeX, mazeY, mazeXf, mazeYf,control_width;
 	private float unit;	
 	private Pawn player,opponent;
 	private FlexibleMazeActivity root;
@@ -66,13 +61,13 @@ public class DuelMode extends View {
 		this.mRows = maze[0].length;
 
 		this.unit = getUnitSize(H, mRows);
-		mActivePointers = new SparseArray<PointF>();
 		mazeX = (W - (unit * 5 * mCols + unit)) / 2;
-		mazeY = 2 * unit;
+		mazeY = unit;
 		mazeXf = mazeX + unit * 5 * mCols + unit;
 		mazeYf = mazeY + unit * 5 * mRows + unit;
 		ballX = mazeX + 3 * unit;
 		ballY = mazeY + 3 * unit;
+		control_width = (H-mazeYf);
 
 		this.mMaze = maze;
 		lpf = new LongestPathFinder(maze, mCols, mRows);
@@ -136,10 +131,11 @@ public class DuelMode extends View {
 			paint3.setColor(Color.rgb(201, 202, 204));
 			break;
 		}
-		up = new GameControl(this, unit, 0);
-		down = new GameControl(this, unit, 1);
-		left = new GameControl(this, unit, 2);
-		right = new GameControl(this, unit, 3);
+		
+		up = new GameControl(this, unit, 0, control_width);
+		down = new GameControl(this, unit, 1,control_width);
+		left = new GameControl(this, unit, 2,control_width);
+		right = new GameControl(this, unit, 3,control_width);
 		
 		vibrator = (Vibrator) context
 				.getSystemService(Context.VIBRATOR_SERVICE);
@@ -297,25 +293,24 @@ public class DuelMode extends View {
 	// paints line on which pointer is placed
 	private void paintGameControls(Canvas canvas) {
 		if (up.pressed)
-			canvas.drawBitmap(up.image, 0, H - 38 * unit, paint3i);
+			canvas.drawBitmap(up.image, 0, H - 3*control_width, paint3i);
 		else
-			canvas.drawBitmap(up.image, 0, H - 38 * unit, paint2i);
+			canvas.drawBitmap(up.image, 0, H - 3*control_width, paint2i);
 		if (down.pressed)
-			canvas.drawBitmap(down.image, 0, H - 14 * unit, paint3i);
+			canvas.drawBitmap(down.image, 0, H - control_width , paint3i);
 		else
-			canvas.drawBitmap(down.image, 0, H - 14 * unit, paint2i);
+			canvas.drawBitmap(down.image, 0, H - control_width , paint2i);
 		if (left.pressed)
-			canvas.drawBitmap(left.image, W - 38 * unit, H - 12 * unit, paint3i);
+			canvas.drawBitmap(left.image, W - 3*control_width , H -control_width , paint3i);
 		else
-			canvas.drawBitmap(left.image, W - 38 * unit, H - 12 * unit, paint2i);
+			canvas.drawBitmap(left.image, W - 3*control_width, H - control_width, paint2i);
 		if (right.pressed)
-			canvas.drawBitmap(right.image, W - 14 * unit, H - 12 * unit,
+			canvas.drawBitmap(right.image, W - control_width, H - control_width,
 					paint3i);
 		else
-			canvas.drawBitmap(right.image, W - 14 * unit, H - 12 * unit,
+			canvas.drawBitmap(right.image, W - control_width, H - control_width,
 					paint2i);
 	}
-
 	
 	public void setDrawState(int state) {
 		mGameState = state;
@@ -460,8 +455,6 @@ public class DuelMode extends View {
 	}
 	
 	public boolean onTouchEvent(MotionEvent event) {
-		int pointerIndex = event.getActionIndex();
-		int pointerId = event.getPointerId(pointerIndex);
 		int maskedAction = event.getActionMasked();
 		switch (maskedAction) {
 		case MotionEvent.ACTION_DOWN:
@@ -487,36 +480,31 @@ public class DuelMode extends View {
 				break;
 			}
 
-			if (event.getX() < mazeX) {
-				if (H - 40 * unit < event.getY()
-						&& event.getY() < H - 21 * unit) {
+			if (event.getX() < control_width) {
+				if (H - 3*control_width < event.getY()
+						&& event.getY() < H - 2*control_width) {
 					up.pressed = true;
 					player.fy -= 1;
-				} else if (H - 16 * unit < event.getY() && event.getY() < H) {
+				} else if (H - control_width < event.getY() && event.getY() < H) {
 					down.pressed = true;
 					player.fy += 1;
 				}
-			} else if (event.getY() > mazeYf) {
-				if (W - 40 * unit < event.getX()
-						&& event.getX() < W - 21 * unit) {
+			} else if (event.getY() > H-control_width) {
+				if (W - 3*control_width < event.getX()
+						&& event.getX() < W - 2*control_width) {
 					left.pressed = true;
 					player.fx -= 1;
-				} else if (W - 16 * unit < event.getX() && event.getX() < W) {
+				} else if (W - control_width < event.getX() && event.getX() < W) {
 					right.pressed = true;
 					player.fx += 1;
 				}
 			}
-			PointF f = new PointF();
-			f.x = event.getX(pointerIndex);
-			f.y = event.getY(pointerIndex);
-			mActivePointers.put(pointerId, f);
 			break;
 		case MotionEvent.ACTION_MOVE:
 		case MotionEvent.ACTION_UP:
 		case MotionEvent.ACTION_POINTER_UP:
 		case MotionEvent.ACTION_CANCEL:
 			up.pressed = down.pressed = left.pressed = right.pressed = false;
-			mActivePointers.remove(pointerId);
 			break;
 		}
 		invalidate();

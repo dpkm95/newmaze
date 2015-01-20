@@ -12,103 +12,103 @@ import android.graphics.BitmapFactory;
 public class GameControl {
 	public Bitmap image;
 	public boolean pressed;
-	public GameControl(ClassicMode view,float unit,int i){
+	public GameControl(ClassicMode view,float unit,int i,float control_width){
 		switch(i){
 		//0-up,1-down,2-left,3-right
 		case 0:
 			image = BitmapTransformer.RotateBitmap(BitmapTransformer.getResizedBitmap(
 					BitmapFactory.decodeResource(view.getResources(), R.drawable.arrow),
-					(int) (12 * unit), (int) (12 * unit)), 270);
+					(int)control_width, (int)control_width), 270);
 			break;
 		case 1:
 			image = BitmapTransformer.RotateBitmap(BitmapTransformer.getResizedBitmap(
 					BitmapFactory.decodeResource(view.getResources(), R.drawable.arrow),
-					(int) (12 * unit), (int) (12 * unit)), 90);
+					(int) control_width, (int) control_width), 90);
 			break;
 		case 2:
 			image = BitmapTransformer.RotateBitmap(BitmapTransformer.getResizedBitmap(
 					BitmapFactory.decodeResource(view.getResources(), R.drawable.arrow),
-					(int) (12 * unit), (int) (12 * unit)), 180);
+					(int) control_width, (int) control_width), 180);
 			break;
 		case 3:
 			image=BitmapTransformer.getResizedBitmap(
 					BitmapFactory.decodeResource(view.getResources(), R.drawable.arrow),
-					(int) (12 * unit), (int) (12 * unit));
+					(int) control_width, (int) control_width);
 			break;
 		}
 	}
-	public GameControl(ClassicResumeMode view, float unit, int i) {
+	public GameControl(ClassicResumeMode view, float unit, int i,float control_width) {
 		switch(i){
 		//0-up,1-down,2-left,3-right
 		case 0:
 			image = BitmapTransformer.RotateBitmap(BitmapTransformer.getResizedBitmap(
 					BitmapFactory.decodeResource(view.getResources(), R.drawable.arrow),
-					(int) (12 * unit), (int) (12 * unit)), 270);
+					(int)control_width, (int)control_width), 270);
 			break;
 		case 1:
 			image = BitmapTransformer.RotateBitmap(BitmapTransformer.getResizedBitmap(
 					BitmapFactory.decodeResource(view.getResources(), R.drawable.arrow),
-					(int) (12 * unit), (int) (12 * unit)), 90);
+					(int) control_width, (int) control_width), 90);
 			break;
 		case 2:
 			image = BitmapTransformer.RotateBitmap(BitmapTransformer.getResizedBitmap(
 					BitmapFactory.decodeResource(view.getResources(), R.drawable.arrow),
-					(int) (12 * unit), (int) (12 * unit)), 180);
+					(int) control_width, (int) control_width), 180);
 			break;
 		case 3:
 			image=BitmapTransformer.getResizedBitmap(
 					BitmapFactory.decodeResource(view.getResources(), R.drawable.arrow),
-					(int) (12 * unit), (int) (12 * unit));
+					(int) control_width, (int) control_width);
+			break;
+		}
+	}		
+	public GameControl(DuelMode view, float unit, int i,float control_width) {
+		switch(i){
+		//0-up,1-down,2-left,3-right
+		case 0:
+			image = BitmapTransformer.RotateBitmap(BitmapTransformer.getResizedBitmap(
+					BitmapFactory.decodeResource(view.getResources(), R.drawable.arrow),
+					(int)control_width, (int)control_width), 270);
+			break;
+		case 1:
+			image = BitmapTransformer.RotateBitmap(BitmapTransformer.getResizedBitmap(
+					BitmapFactory.decodeResource(view.getResources(), R.drawable.arrow),
+					(int) control_width, (int) control_width), 90);
+			break;
+		case 2:
+			image = BitmapTransformer.RotateBitmap(BitmapTransformer.getResizedBitmap(
+					BitmapFactory.decodeResource(view.getResources(), R.drawable.arrow),
+					(int) control_width, (int) control_width), 180);
+			break;
+		case 3:
+			image=BitmapTransformer.getResizedBitmap(
+					BitmapFactory.decodeResource(view.getResources(), R.drawable.arrow),
+					(int) control_width, (int) control_width);
 			break;
 		}
 	}
-	public GameControl(DuelMode view, float unit, int i) {
+	public GameControl(ChallengeMode view, float unit, int i,float control_width) {
 		switch(i){
 		//0-up,1-down,2-left,3-right
 		case 0:
 			image = BitmapTransformer.RotateBitmap(BitmapTransformer.getResizedBitmap(
 					BitmapFactory.decodeResource(view.getResources(), R.drawable.arrow),
-					(int) (12 * unit), (int) (12 * unit)), 270);
+					(int)control_width, (int)control_width), 270);
 			break;
 		case 1:
 			image = BitmapTransformer.RotateBitmap(BitmapTransformer.getResizedBitmap(
 					BitmapFactory.decodeResource(view.getResources(), R.drawable.arrow),
-					(int) (12 * unit), (int) (12 * unit)), 90);
+					(int) control_width, (int) control_width), 90);
 			break;
 		case 2:
 			image = BitmapTransformer.RotateBitmap(BitmapTransformer.getResizedBitmap(
 					BitmapFactory.decodeResource(view.getResources(), R.drawable.arrow),
-					(int) (12 * unit), (int) (12 * unit)), 180);
+					(int) control_width, (int) control_width), 180);
 			break;
 		case 3:
 			image=BitmapTransformer.getResizedBitmap(
 					BitmapFactory.decodeResource(view.getResources(), R.drawable.arrow),
-					(int) (12 * unit), (int) (12 * unit));
-			break;
-		}
-	}
-	public GameControl(ChallengeMode view, float unit, int i) {
-		switch(i){
-		//0-up,1-down,2-left,3-right
-		case 0:
-			image = BitmapTransformer.RotateBitmap(BitmapTransformer.getResizedBitmap(
-					BitmapFactory.decodeResource(view.getResources(), R.drawable.arrow),
-					(int) (12 * unit), (int) (12 * unit)), 270);
-			break;
-		case 1:
-			image = BitmapTransformer.RotateBitmap(BitmapTransformer.getResizedBitmap(
-					BitmapFactory.decodeResource(view.getResources(), R.drawable.arrow),
-					(int) (12 * unit), (int) (12 * unit)), 90);
-			break;
-		case 2:
-			image = BitmapTransformer.RotateBitmap(BitmapTransformer.getResizedBitmap(
-					BitmapFactory.decodeResource(view.getResources(), R.drawable.arrow),
-					(int) (12 * unit), (int) (12 * unit)), 180);
-			break;
-		case 3:
-			image=BitmapTransformer.getResizedBitmap(
-					BitmapFactory.decodeResource(view.getResources(), R.drawable.arrow),
-					(int) (12 * unit), (int) (12 * unit));
+					(int) control_width, (int) control_width);
 			break;
 		}
 	}

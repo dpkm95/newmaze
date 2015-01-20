@@ -1,5 +1,9 @@
 package com.dpkm95.maze.activity;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import com.dpkm95.maze.R;
 import com.dpkm95.maze.utils.Archiver;
 import com.dpkm95.maze.view.LaunchView;
 import com.facebook.AppEventsLogger;
@@ -13,7 +17,13 @@ import com.facebook.widget.WebDialog.OnCompleteListener;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.content.ComponentName;
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
+import android.content.pm.LabeledIntent;
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
+import android.content.res.Resources;
 import android.graphics.Color;
 import android.graphics.Point;
 import android.os.Bundle;
@@ -73,74 +83,17 @@ public class MainActivity extends Activity {
 	    uiHelper.onDestroy();
 	}
 	
-	public void shareDialog(){
+	public void shareFacebookDialog(){
 		String linkString = "https://developers.facebook.com/android";
-		if (FacebookDialog.canPresentShareDialog(getApplicationContext(), FacebookDialog.ShareDialogFeature.SHARE_DIALOG)) {
-		    FacebookDialog shareDialog = new FacebookDialog.ShareDialogBuilder(this).setLink(linkString)
-		    		.setApplicationName("maze")
-		            .setLink("https://www.google.co.in")
-		            .setName("Maze Challenge!")
-		            .setDescription("My top score: "+Archiver.get_top_score(this)+"\nBeat that!").build();
-		    uiHelper.trackPendingDialogCall(shareDialog.present());
-		} else {
-		    //publishFeedDialog();
-		}
-//		FacebookDialog shareDialog = new FacebookDialog.ShareDialogBuilder(mActivity)
-//        .setApplicationName("My app")
-//        .setName("Hi All:")
-//        .setPicture("https://fbcdn-sphotos-h-a.akamaihd.net/hphotos-ak-prn1/27928_228440670639329_1320586523_n.jpg")
-//        .setDescription("I've just created a card, Check it out!")
-//        .setLink(shareLink)
-//        .build();
+		FacebookDialog shareDialog = new FacebookDialog.ShareDialogBuilder(this).setLink(linkString)
+	    		.setApplicationName("maze")
+	            .setLink("https://www.google.co.in")
+	            .setName("Maze Challenge!")
+	            .setDescription("My top score: "+Archiver.get_top_score(this)+"\nBeat that!").build();
+	    uiHelper.trackPendingDialogCall(shareDialog.present());
 	}
-	private void publishFeedDialog() {
-	    Bundle params = new Bundle();
-	    params.putString("name", "Facebook SDK for Android");
-	    params.putString("caption", "Build great social apps and get more installs.");
-	    params.putString("description", "The Facebook SDK for Android makes it easier and faster to develop Facebook integrated Android apps.");
-	    params.putString("link", "https://developers.facebook.com/android");
-	    params.putString("picture", "https://raw.github.com/fbsamples/ios-3.x-howtos/master/Images/iossdk_logo.png");
-
-	    WebDialog feedDialog = (
-	        new WebDialog.FeedDialogBuilder(this,
-	            Session.getActiveSession(),
-	            params))
-	        .setOnCompleteListener(new OnCompleteListener() {
-
-	            @Override
-	            public void onComplete(Bundle values,
-	                FacebookException error) {
-	                if (error == null) {
-	                    // When the story is posted, echo the success
-	                    // and the post Id.
-	                    final String postId = values.getString("post_id");
-	                    if (postId != null) {
-	                        Toast.makeText(getApplicationContext(),
-	                            "Posted story, id: "+postId,
-	                            Toast.LENGTH_SHORT).show();
-	                    } else {
-	                        // User clicked the Cancel button
-	                        Toast.makeText(getApplicationContext(), 
-	                            "Publish cancelled", 
-	                            Toast.LENGTH_SHORT).show();
-	                    }
-	                } else if (error instanceof FacebookOperationCanceledException) {
-	                    // User clicked the "x" button
-	                    Toast.makeText(getApplicationContext(), 
-	                        "Publish cancelled", 
-	                        Toast.LENGTH_SHORT).show();
-	                } else {
-	                    // Generic, ex: network error
-	                    Toast.makeText(getApplicationContext(), 
-	                        "Error posting story", 
-	                        Toast.LENGTH_SHORT).show();
-	                }
-	            }
-
-	        })
-	        .build();
-	    feedDialog.show();
-	}
+	
+	
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 	    super.onActivityResult(requestCode, resultCode, data);
@@ -156,5 +109,29 @@ public class MainActivity extends Activity {
 	            Log.i("Activity", "Success!");
 	        }
 	    });
+	}
+
+	public void shareFb() {
+		Intent shareIntent = new Intent("android.intent.action.SEND");
+		   shareIntent.setType("text/plain");
+		   shareIntent.putExtra(android.content.Intent.EXTRA_SUBJECT, R.string.app_name);
+		   shareIntent.putExtra(android.content.Intent.EXTRA_TEXT, R.drawable.ic_launcher);
+
+		   PackageManager pm = this.getPackageManager();
+		   List<ResolveInfo> activityList = pm.queryIntentActivities(shareIntent, 0);
+		     for (final ResolveInfo app : activityList) 
+		     {
+		         if ((app.activityInfo.name).contains("facebook")) 
+		         {
+		           final ActivityInfo activity = app.activityInfo;
+		           final ComponentName name = new ComponentName(activity.applicationInfo.packageName, activity.name);
+		          shareIntent.addCategory(Intent.CATEGORY_LAUNCHER);
+		          shareIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
+		          shareIntent.setComponent(name);
+		          startActivity(shareIntent);
+		          break;
+		        }
+		      }
+		
 	}
 }

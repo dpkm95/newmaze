@@ -12,10 +12,14 @@ import com.dpkm95.maze.utils.BitmapTransformer;
 import com.dpkm95.maze.utils.MazeConstants;
 import com.dpkm95.maze.R;
 import com.facebook.Session;
+import com.facebook.widget.FacebookDialog;
+
 import android.annotation.SuppressLint;
+import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -37,6 +41,7 @@ import android.util.SparseArray;
 import android.view.Display;
 import android.view.MotionEvent;
 import android.view.View;
+import android.widget.ArrayAdapter;
 import android.widget.Toast;
 
 @SuppressLint("ClickableViewAccessibility")
@@ -45,7 +50,6 @@ public class LaunchView extends View {
 	private static final int REQUEST_ENABLE_BT = 3;
 	private BluetoothAdapter mBluetoothAdapter = null;
 
-	private SparseArray<PointF> mActivePointers = new SparseArray<PointF>();
 	private static float classic_ix, classic_iy, classic_fx, classic_fy;
 	private static float challenge_ix, challenge_iy, challenge_fx,
 			challenge_fy;
@@ -68,7 +72,7 @@ public class LaunchView extends View {
 	private float H, W;
 	private MainActivity root;
 	private Context m_context;
-	private int selection = 1;
+	private int selection = 1,touch_down_widget;
 	private Bitmap classic, challenge, duel, achievements, instructions,
 			settings, easy, normal, hard, bluetooth, discoverable, search,
 			hot_classic, hot_challenge, hot_duel, large, small, tone,
@@ -260,11 +264,13 @@ public class LaunchView extends View {
 
 	public void onWindowFocusChanged(boolean hasFocus) {
 		super.onWindowFocusChanged(hasFocus);
-		if (!hasFocus) {
+		if (!hasFocus) {			
 			Archiver.save_game_constants(root, MazeConstants.SIZE,
 					MazeConstants.DIFFICULTY, MazeConstants.TONE,
 					MazeConstants.VIBRATION, MazeConstants.RESUMABLE,
 					MazeConstants.COLOR);
+		}else{
+			invalidate();
 		}
 	}
 
@@ -383,20 +389,27 @@ public class LaunchView extends View {
 						+ (W - 4 * unit - 2 * sel_w) / 2 - 3 * unit * 4, 3
 						* unit + (H - 3 * unit) / 4, paint2);
 			}
-
-			if (resume_pressed) {
-				canvas.drawRect(3 * unit + 2 * sel_w, 2 * unit + (H - 3 * unit)
-						/ 2, W - unit, H - unit, paint2);
-				canvas.drawText("  Resume", 3 * unit + 2 * sel_w
-						+ (W - 4 * unit - 2 * sel_w) / 2 - 3 * unit * 4, 4
-						* unit + 3 * (H - 3 * unit) / 4, paint1);
-			} else {
+			if(MazeConstants.RESUMABLE){
+				if (resume_pressed) {
+					canvas.drawRect(3 * unit + 2 * sel_w, 2 * unit + (H - 3 * unit)
+							/ 2, W - unit, H - unit, paint2);
+					canvas.drawText("  Resume", 3 * unit + 2 * sel_w
+							+ (W - 4 * unit - 2 * sel_w) / 2 - 3 * unit * 4, 4
+							* unit + 3 * (H - 3 * unit) / 4, paint1);
+				} else {
+					canvas.drawRect(3 * unit + 2 * sel_w, 2 * unit + (H - 3 * unit)
+							/ 2, W - unit, H - unit, paint3);
+					canvas.drawText("  Resume", 3 * unit + 2 * sel_w
+							+ (W - 4 * unit - 2 * sel_w) / 2 - 3 * unit * 4, 4
+							* unit + 3 * (H - 3 * unit) / 4, paint2);
+				}
+			}else{
 				canvas.drawRect(3 * unit + 2 * sel_w, 2 * unit + (H - 3 * unit)
 						/ 2, W - unit, H - unit, paint3);
 				canvas.drawText("  Resume", 3 * unit + 2 * sel_w
 						+ (W - 4 * unit - 2 * sel_w) / 2 - 3 * unit * 4, 4
-						* unit + 3 * (H - 3 * unit) / 4, paint2);
-			}
+						* unit + 3 * (H - 3 * unit) / 4, paint1);
+			}			
 			break;
 		case 2:
 			paint1.setTextSize(5 * unit);
@@ -457,7 +470,7 @@ public class LaunchView extends View {
 			canvas.drawBitmap(discoverable, hot_b2_ix, hot_b2_iy, paint3i);
 			canvas.drawBitmap(search, hot_b3_ix, hot_b3_iy, paint3i);
 
-			if (challenge_pressed) {
+			if (duel_pressed) {
 				canvas.drawRect(hot_b1_ix, hot_b1_fy + unit, W - unit,
 						H - unit, paint2);
 				canvas.drawText("  Start", hot_b1_ix
@@ -465,12 +478,18 @@ public class LaunchView extends View {
 						hot_b1_fy + 3 * unit + (H - 5 * unit - hot_w / 2) / 2,
 						paint1);
 			} else {
+//				canvas.drawRect(hot_b1_ix, hot_b1_fy + unit, W - unit,
+//						H - unit, paint3);
+//				canvas.drawText("  Start", hot_b1_ix
+//						+ (W - 4 * unit - 2 * sel_w) / 2 - 3 * unit * 3,
+//						hot_b1_fy + 3 * unit + (H - 5 * unit - hot_w / 2) / 2,
+//						paint2);
 				canvas.drawRect(hot_b1_ix, hot_b1_fy + unit, W - unit,
 						H - unit, paint3);
 				canvas.drawText("  Start", hot_b1_ix
 						+ (W - 4 * unit - 2 * sel_w) / 2 - 3 * unit * 3,
 						hot_b1_fy + 3 * unit + (H - 5 * unit - hot_w / 2) / 2,
-						paint2);
+						paint1);
 			}
 
 			break;
@@ -635,90 +654,76 @@ public class LaunchView extends View {
 
 			canvas.drawRect(hot_b1_ix, hot_b1_fy + unit, W - unit, H - unit,
 					paint3);
-
-			paint2.setTextSize(3 * unit);
+			
 			switch (i_widget_pressed) {
 			case 1:
+				paint2.setTextSize(4 * unit);				
 				canvas.drawText("Classic mode:", hot_b1_ix + 2 * unit,
 						hot_b1_fy + 5 * unit, paint2);
+				paint2.setTextSize(3 * unit);
 				canvas.drawText("Grey dot - player", hot_b1_ix + 2 * unit,
 						hot_b1_fy + 11 * unit, paint2);
 				canvas.drawText("Yellow dot - key", hot_b1_ix + 2 * unit,
 						hot_b1_fy + 14 * unit, paint2);
-				canvas.drawText("Move grey dot using two fingers", hot_b1_ix
+				canvas.drawText("Use arrow keys to navigate", hot_b1_ix
 						+ 2 * unit, hot_b1_fy + 17 * unit, paint2);
-				canvas.drawText("Use bottom region for horizontal motion",
-						hot_b1_ix + 2 * unit, hot_b1_fy + 20 * unit, paint2);
-				canvas.drawText("Use left region for vertical motion",
-						hot_b1_ix + 2 * unit, hot_b1_fy + 23 * unit, paint2);
-				canvas.drawText("Do NOT touch the walls of the maze", hot_b1_ix
-						+ 2 * unit, hot_b1_fy + 26 * unit, paint2);
-				canvas.drawText("Collect yellow keys to increment score/life",
+				canvas.drawText("Avoid crashing into wall", hot_b1_ix
+						+ 2 * unit, hot_b1_fy + 20 * unit, paint2);
+				canvas.drawText("Collect keys to increment score/life",
+						hot_b1_ix + 2 * unit, hot_b1_fy + 26 * unit, paint2);
+				canvas.drawText("Life gets costlier with each loss",
+						hot_b1_ix + 2 * unit, hot_b1_fy + 29 * unit, paint2);
+				canvas.drawText("Score increases only with full life",
 						hot_b1_ix + 2 * unit, hot_b1_fy + 32 * unit, paint2);
-				canvas.drawText("Lives get costlier each time you loose one",
+				canvas.drawText("Touch player to set a teleport point",
 						hot_b1_ix + 2 * unit, hot_b1_fy + 35 * unit, paint2);
-				canvas.drawText("Score increases only if you have a life",
+				canvas.drawText("Touch it again to teleport back!",
 						hot_b1_ix + 2 * unit, hot_b1_fy + 38 * unit, paint2);
-				canvas.drawText("Touch on grey dot to set a teleport point",
-						hot_b1_ix + 2 * unit, hot_b1_fy + 44 * unit, paint2);
-				canvas.drawText("Touch on it again to teleport back!",
-						hot_b1_ix + 2 * unit, hot_b1_fy + 47 * unit, paint2);
 				break;
 			case 2:
+				paint2.setTextSize(4 * unit);
 				canvas.drawText("Challenge mode:", hot_b1_ix + 2 * unit,
 						hot_b1_fy + 5 * unit, paint2);
+				paint2.setTextSize(3 * unit);
 				canvas.drawText("Grey dot - player", hot_b1_ix + 2 * unit,
 						hot_b1_fy + 11 * unit, paint2);
 				canvas.drawText("Orange dot - opponent(pc)", hot_b1_ix + 2
 						* unit, hot_b1_fy + 14 * unit, paint2);
-				canvas.drawText("Move grey dot using two fingers", hot_b1_ix
+				canvas.drawText("Use arrow keys to navigate", hot_b1_ix
 						+ 2 * unit, hot_b1_fy + 17 * unit, paint2);
-				canvas.drawText("Use bottom region for horizontal motion",
-						hot_b1_ix + 2 * unit, hot_b1_fy + 20 * unit, paint2);
-				canvas.drawText("Use left region for vertical motion",
-						hot_b1_ix + 2 * unit, hot_b1_fy + 23 * unit, paint2);
-				canvas.drawText("Do NOT touch the walls of the maze", hot_b1_ix
-						+ 2 * unit, hot_b1_fy + 26 * unit, paint2);
-				canvas.drawText("Your destination is opponent's initial point",
-						hot_b1_ix + 2 * unit, hot_b1_fy + 32 * unit, paint2);
-				canvas.drawText("Opponent's destination is your initial point",
-						hot_b1_ix + 2 * unit, hot_b1_fy + 35 * unit, paint2);
-				canvas.drawText("The challenge starts once you start!",
-						hot_b1_ix + 2 * unit, hot_b1_fy + 38 * unit, paint2);
+				canvas.drawText("Avoid crashing into wall", hot_b1_ix
+						+ 2 * unit, hot_b1_fy + 20 * unit, paint2);
+				canvas.drawText("Destination - opponent's start point",
+						hot_b1_ix + 2 * unit, hot_b1_fy + 26 * unit, paint2);
 				break;
 			case 3:
+				paint2.setTextSize(4 * unit);
 				canvas.drawText("Duel mode:", hot_b1_ix + 2 * unit, hot_b1_fy
 						+ 5 * unit, paint2);
+				paint2.setTextSize(3 * unit);
 				canvas.drawText("Grey dot - player", hot_b1_ix + 2 * unit,
 						hot_b1_fy + 11 * unit, paint2);
 				canvas.drawText("Orange dot - opponent", hot_b1_ix + 2 * unit,
 						hot_b1_fy + 14 * unit, paint2);
-				canvas.drawText("Move grey dot using two fingers", hot_b1_ix
+				canvas.drawText("Use arrow keys to navigate", hot_b1_ix
 						+ 2 * unit, hot_b1_fy + 17 * unit, paint2);
-				canvas.drawText("Use bottom region for horizontal motion",
-						hot_b1_ix + 2 * unit, hot_b1_fy + 20 * unit, paint2);
-				canvas.drawText("Use left region for vertical motion",
-						hot_b1_ix + 2 * unit, hot_b1_fy + 23 * unit, paint2);
-				canvas.drawText("Do NOT touch the walls of the maze", hot_b1_ix
-						+ 2 * unit, hot_b1_fy + 26 * unit, paint2);
+				canvas.drawText("Avoid crashing into wall", hot_b1_ix
+						+ 2 * unit, hot_b1_fy + 20 * unit, paint2);
+				
 				canvas.drawText("Enable bluetooth", hot_b1_ix + 2 * unit,
-						hot_b1_fy + 32 * unit, paint2);
+						hot_b1_fy + 26 * unit, paint2);
 				canvas.drawText("Make device discoverable", hot_b1_ix + 2
-						* unit, hot_b1_fy + 35 * unit, paint2);
+						* unit, hot_b1_fy + 29 * unit, paint2);
 				canvas.drawText("Search for opponent device", hot_b1_ix + 2
-						* unit, hot_b1_fy + 38 * unit, paint2);
-				canvas.drawText("Select opponent device to start duel!",
-						hot_b1_ix + 2 * unit, hot_b1_fy + 41 * unit, paint2);
+						* unit, hot_b1_fy + 32 * unit, paint2);
+				canvas.drawText("Select opponent device, start duel!",
+						hot_b1_ix + 2 * unit, hot_b1_fy + 35 * unit, paint2);
 				break;
 			}
 			break;
 		case 6:
 			canvas.drawRect(hot_b1_ix + unit, hot_b1_iy + unit, hot_b1_fx
 					- unit, hot_b1_fy - unit, paint2);
-			canvas.drawRect(hot_b2_ix + unit, hot_b2_iy + unit, hot_b2_fx
-					- unit, hot_b2_fy - unit, paint2);
-			canvas.drawRect(hot_b3_ix + unit, hot_b3_iy + unit, hot_b3_fx
-					- unit, hot_b3_fy - unit, paint2);
 			if (MazeConstants.SIZE) {
 				canvas.drawBitmap(large, hot_b1_ix, hot_b1_iy, paint3i);
 			} else {
@@ -794,14 +799,10 @@ public class LaunchView extends View {
 	}
 
 	public boolean onTouchEvent(MotionEvent event) {
-		int pointerIndex = event.getActionIndex();
-		int pointerId = event.getPointerId(pointerIndex);
 		int maskedAction = event.getActionMasked();
-
 		switch (maskedAction) {
 		case MotionEvent.ACTION_DOWN:
-		case MotionEvent.ACTION_POINTER_DOWN: {
-
+		case MotionEvent.ACTION_POINTER_DOWN: {			
 			if (classic_ix < event.getX() && event.getX() < classic_fx
 					&& classic_iy < event.getY() && event.getY() < classic_fy)
 				selection = 1;
@@ -832,12 +833,14 @@ public class LaunchView extends View {
 						&& event.getX() < W - unit && unit < event.getY()
 						&& event.getY() < unit + (H - 3 * unit) / 2) {
 					classic_pressed = true;
+					touch_down_widget = 1;
 				}
 				if (3 * unit + 2 * sel_w < event.getX()
 						&& event.getX() < W - unit
 						&& 2 * unit + (H - 3 * unit) / 2 < event.getY()
 						&& event.getY() < H - unit) {
 					resume_pressed = true;
+					touch_down_widget  = 2;
 				}
 				break;
 			case 2:
@@ -854,24 +857,27 @@ public class LaunchView extends View {
 						&& hot_b1_fy + unit < event.getY()
 						&& event.getY() < H - unit) {
 					challenge_pressed = true;
+					touch_down_widget = 1;
 				}
 				break;
 			case 3:
 				if (hot_b1_ix < event.getX() && event.getX() < hot_b1_fx
 						&& hot_b1_iy < event.getY() && event.getY() < hot_b1_fy)
-					bluetooth_pressed = true;
+					//bluetooth_pressed = true;
 				if (hot_b2_ix < event.getX() && event.getX() < hot_b2_fx
 						&& hot_b2_iy < event.getY() && event.getY() < hot_b2_fy
 						&& bluetooth_pressed)
-					discoverable_pressed = true;
+					//discoverable_pressed = true;
 				if (hot_b3_ix < event.getX() && event.getX() < hot_b3_fx
 						&& hot_b3_iy < event.getY() && event.getY() < hot_b3_fy
 						&& discoverable_pressed)
-					search_pressed = true;
+					//search_pressed = true;
 				if (hot_b1_ix < event.getX() && event.getX() < W - unit
 						&& hot_b1_fy + unit < event.getY()
-						&& event.getY() < H - unit && search_pressed)
-					duel_pressed = true;
+						&& event.getY() < H - unit && search_pressed){
+					//duel_pressed = true;
+					touch_down_widget = 1;
+				}					
 				break;
 			case 4:
 				if (hot_b1_ix < event.getX() && event.getX() < hot_b1_fx
@@ -930,6 +936,39 @@ public class LaunchView extends View {
 			break;
 		}
 		case MotionEvent.ACTION_MOVE:
+			switch (selection) {
+			case 1:
+				if (3 * unit + 2 * sel_w < event.getX()
+						&& event.getX() < W - unit && unit < event.getY()
+						&& event.getY() < unit + (H - 3 * unit) / 2 
+						&& touch_down_widget == 1) {
+					classic_pressed = true;
+				}
+				if (3 * unit + 2 * sel_w < event.getX()
+						&& event.getX() < W - unit
+						&& 2 * unit + (H - 3 * unit) / 2 < event.getY()
+						&& event.getY() < H - unit
+						&& touch_down_widget == 2) {
+					resume_pressed = true;
+				}
+				break;
+			case 2:
+				if (hot_b1_ix < event.getX() && event.getX() < W - unit
+						&& hot_b1_fy + unit < event.getY()
+						&& event.getY() < H - unit
+						&& touch_down_widget == 1) {
+					challenge_pressed = true;
+				}
+				break;
+			case 3:
+				if (hot_b1_ix < event.getX() && event.getX() < W - unit
+						&& hot_b1_fy + unit < event.getY()
+						&& event.getY() < H - unit && search_pressed
+						&& touch_down_widget == 1)
+					//duel_pressed = true;
+				break;			
+			}
+			break;
 		case MotionEvent.ACTION_UP:
 		case MotionEvent.ACTION_POINTER_UP: {
 			switch (selection) {
@@ -1038,14 +1077,56 @@ public class LaunchView extends View {
 						&& settings_fy - hot_w / 2 < event.getY()
 						&& event.getY() < settings_fy && share_pressed) {
 					share_pressed = false;
-					root.shareDialog();
-					// Intent sendIntent = new Intent();
-					// sendIntent.setAction(Intent.ACTION_SEND);
-					// sendIntent.putExtra(Intent.EXTRA_TEXT,
-					// "Maze Challenge:\nMy top score: "+Archiver.get_top_score(root)+"\nBeat that!\nhttp://play.google.com/store/apps/details?id="
-					// + root.getPackageName());
-					// sendIntent.setType("text/plain");
-					// root.startActivity(sendIntent);
+					
+					String[] items = {"Facebook", "Others"};
+					final ArrayAdapter<String> adapter;					
+					final AlertDialog.Builder listBuilder = new AlertDialog.Builder(root);
+					listBuilder.setIcon(R.drawable.ic_launcher);
+					listBuilder.setTitle("Share your top score via");
+					adapter = new ArrayAdapter<String>(root, android.R.layout.select_dialog_singlechoice, items);
+					listBuilder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+					@Override
+					public void onClick(DialogInterface dialog, int which) {
+					dialog.dismiss();
+					}
+					});
+					listBuilder.setAdapter(adapter, new DialogInterface.OnClickListener() {
+					@Override
+					public void onClick(DialogInterface dialog, int which) {						
+						switch(which){
+						case 0:
+							if(FacebookDialog.canPresentShareDialog(root, FacebookDialog.ShareDialogFeature.SHARE_DIALOG)){
+								root.shareFacebookDialog();
+								
+							}else{
+								Toast.makeText(root,"Facebook app not available", Toast.LENGTH_SHORT).show();
+								listBuilder.show();
+							}
+							break;
+						case 1:
+							Intent sendIntent = new Intent();
+							 sendIntent.setAction(Intent.ACTION_SEND);
+							 sendIntent.putExtra(Intent.EXTRA_TEXT,
+							 "Maze Challenge:\nMy top score: "+Archiver.get_top_score(root)+"\nBeat that!\nhttp://play.google.com/store/apps/details?id="
+							 + root.getPackageName());
+							 sendIntent.setType("text/plain");
+							 root.startActivity(sendIntent);
+							break;
+					}
+					}
+					});
+					if(FacebookDialog.canPresentShareDialog(root, FacebookDialog.ShareDialogFeature.SHARE_DIALOG)){
+						listBuilder.show();
+					}else{
+						Intent sendIntent = new Intent();
+						 sendIntent.setAction(Intent.ACTION_SEND);
+						 sendIntent.putExtra(Intent.EXTRA_TEXT,
+						 "Maze Challenge:\nMy top score: "+Archiver.get_top_score(root)+"\nBeat that!\nhttp://play.google.com/store/apps/details?id="
+						 + root.getPackageName());
+						 sendIntent.setType("text/plain");
+						 root.startActivity(sendIntent);
+					}
+																			 
 				}
 				if (hot_b2_ix < event.getX() && event.getX() < hot_b2_fx
 						&& settings_fy - hot_w / 2 < event.getY()
@@ -1068,7 +1149,7 @@ public class LaunchView extends View {
 			challenge_pressed = false;
 			classic_pressed = false;
 			resume_pressed = false;
-			duel_pressed = false;
+			duel_pressed = false;					
 			if (selection != 4 && selection != 5) {
 				a_widget_pressed = 1;
 				i_widget_pressed = 1;
@@ -1080,10 +1161,7 @@ public class LaunchView extends View {
 			}
 			break;
 		}
-		case MotionEvent.ACTION_CANCEL: {
-			mActivePointers.remove(pointerId);
-			break;
-		}
+		case MotionEvent.ACTION_CANCEL:
 		}
 
 		invalidate();

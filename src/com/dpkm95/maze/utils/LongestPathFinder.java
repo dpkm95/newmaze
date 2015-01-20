@@ -99,6 +99,13 @@ public class LongestPathFinder {
 	public Stack getLongestPath() {
 		return ms.pop();
 	}
+	
+	public Stack getRevserseLongestPath(){
+		Stack rev = new Stack();
+		rev.copy(endPoints);
+		rev.reverse();
+		return rev;
+	}
 
 	/*
 	 * count_ones returns the number of one's in the binary number k. this count
