@@ -271,6 +271,7 @@ public class LaunchView extends View {
 					MazeConstants.COLOR);
 		}else{
 			invalidate();
+			Log.d("focus changed", "invalidated");
 		}
 	}
 
@@ -416,15 +417,15 @@ public class LaunchView extends View {
 			paint2.setTextSize(5 * unit);
 			switch (MazeConstants.DIFFICULTY) {
 			case 1:
-				canvas.drawRect(hot_b1_ix, hot_b1_iy, hot_b1_fx, hot_b1_fy,
+				canvas.drawRect(hot_b1_ix+unit, hot_b1_iy+unit, hot_b1_fx-unit, hot_b1_fy-unit,
 						paint2);
 				break;
 			case 2:
-				canvas.drawRect(hot_b2_ix, hot_b2_iy, hot_b2_fx, hot_b2_fy,
+				canvas.drawRect(hot_b2_ix+unit, hot_b2_iy+unit, hot_b2_fx-unit, hot_b2_fy-unit,
 						paint2);
 				break;
 			case 3:
-				canvas.drawRect(hot_b3_ix, hot_b3_iy, hot_b3_fx, hot_b3_fy,
+				canvas.drawRect(hot_b3_ix+unit, hot_b3_iy+unit, hot_b3_fx-unit, hot_b3_fy-unit,
 						paint2);
 				break;
 			}
@@ -454,15 +455,15 @@ public class LaunchView extends View {
 			paint1.setTextSize(5 * unit);
 			paint2.setTextSize(5 * unit);
 			if (bluetooth_pressed) {
-				canvas.drawRect(hot_b1_ix, hot_b1_iy, hot_b1_fx, hot_b1_fy,
+				canvas.drawRect(hot_b1_ix+unit, hot_b1_iy+unit, hot_b1_fx-unit, hot_b1_fy-unit,
 						paint2);
 			}
 			if (discoverable_pressed) {
-				canvas.drawRect(hot_b2_ix, hot_b2_iy, hot_b2_fx, hot_b2_fy,
+				canvas.drawRect(hot_b2_ix+unit, hot_b2_iy+unit, hot_b2_fx-unit, hot_b2_fy-unit,
 						paint2);
 			}
 			if (search_pressed) {
-				canvas.drawRect(hot_b3_ix, hot_b3_iy, hot_b3_fx, hot_b3_fy,
+				canvas.drawRect(hot_b3_ix+unit, hot_b3_iy+unit, hot_b3_fx-unit, hot_b3_fy-unit,
 						paint2);
 			}
 
@@ -478,33 +479,27 @@ public class LaunchView extends View {
 						hot_b1_fy + 3 * unit + (H - 5 * unit - hot_w / 2) / 2,
 						paint1);
 			} else {
-//				canvas.drawRect(hot_b1_ix, hot_b1_fy + unit, W - unit,
-//						H - unit, paint3);
-//				canvas.drawText("  Start", hot_b1_ix
-//						+ (W - 4 * unit - 2 * sel_w) / 2 - 3 * unit * 3,
-//						hot_b1_fy + 3 * unit + (H - 5 * unit - hot_w / 2) / 2,
-//						paint2);
 				canvas.drawRect(hot_b1_ix, hot_b1_fy + unit, W - unit,
 						H - unit, paint3);
 				canvas.drawText("  Start", hot_b1_ix
 						+ (W - 4 * unit - 2 * sel_w) / 2 - 3 * unit * 3,
 						hot_b1_fy + 3 * unit + (H - 5 * unit - hot_w / 2) / 2,
-						paint1);
+						paint2);
 			}
 
 			break;
 		case 4:
 			switch (a_widget_pressed) {
 			case 1:
-				canvas.drawRect(hot_b1_ix, hot_b1_iy, hot_b1_fx, hot_b1_fy,
+				canvas.drawRect(hot_b1_ix+unit, hot_b1_iy+unit, hot_b1_fx-unit, hot_b1_fy-unit,
 						paint2);
 				break;
 			case 2:
-				canvas.drawRect(hot_b2_ix, hot_b2_iy, hot_b2_fx, hot_b2_fy,
+				canvas.drawRect(hot_b2_ix+unit, hot_b2_iy+unit, hot_b2_fx-unit, hot_b2_fy-unit,
 						paint2);
 				break;
 			case 3:
-				canvas.drawRect(hot_b3_ix, hot_b3_iy, hot_b3_fx, hot_b3_fy,
+				canvas.drawRect(hot_b3_ix+unit, hot_b3_iy+unit, hot_b3_fx-unit, hot_b3_fy-unit,
 						paint2);
 
 				break;
@@ -635,17 +630,16 @@ public class LaunchView extends View {
 		case 5:
 			switch (i_widget_pressed) {
 			case 1:
-				canvas.drawRect(hot_b1_ix, hot_b1_iy, hot_b1_fx, hot_b1_fy,
+				canvas.drawRect(hot_b1_ix+unit, hot_b1_iy+unit, hot_b1_fx-unit, hot_b1_fy-unit,
 						paint2);
 				break;
 			case 2:
-				canvas.drawRect(hot_b2_ix, hot_b2_iy, hot_b2_fx, hot_b2_fy,
+				canvas.drawRect(hot_b2_ix+unit, hot_b2_iy+unit, hot_b2_fx-unit, hot_b2_fy-unit,
 						paint2);
 				break;
 			case 3:
-				canvas.drawRect(hot_b3_ix, hot_b3_iy, hot_b3_fx, hot_b3_fy,
+				canvas.drawRect(hot_b3_ix+unit, hot_b3_iy+unit, hot_b3_fx-unit, hot_b3_fy-unit,
 						paint2);
-				break;
 			}
 
 			canvas.drawBitmap(hot_classic, hot_b1_ix, hot_b1_iy, paint3i);
@@ -965,7 +959,7 @@ public class LaunchView extends View {
 						&& hot_b1_fy + unit < event.getY()
 						&& event.getY() < H - unit && search_pressed
 						&& touch_down_widget == 1)
-					//duel_pressed = true;
+					duel_pressed = true;
 				break;			
 			}
 			break;
@@ -1003,7 +997,7 @@ public class LaunchView extends View {
 				}
 				break;
 			case 3:
-				/*
+				
 				mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
 
 				// If the adapter is null, then Bluetooth is not supported
@@ -1028,9 +1022,9 @@ public class LaunchView extends View {
 						// Otherwise, setup the chat session
 					} else {
 						
-						 if (ConnectActivity.mChatService == null) //
-						 setupChat(); ConnectActivity.mChatService = new
-						 BluetoothChatService(root, ConnectActivity.mHandler);
+//						 if (ConnectActivity.mChatService == null) //
+//						 setupChat(); ConnectActivity.mChatService = new
+//						 BluetoothChatService(root, ConnectActivity.mHandler);
 						 
 					}
 				}
@@ -1066,7 +1060,7 @@ public class LaunchView extends View {
 					root.startActivityForResult(serverIntent,
 							REQUEST_CONNECT_DEVICE);
 				}
-				*/
+				
 				break;
 			case 4:
 				break;

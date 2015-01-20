@@ -3,6 +3,8 @@ package com.dpkm95.maze.utils;
 import java.util.Arrays;
 import java.util.Collections;
 
+import android.util.Log;
+
 public class MazeGenerator {
 	private final int x;
 	private final int y;
@@ -33,6 +35,7 @@ public class MazeGenerator {
 	public int[][] getMaze(){
 		return maze;
 	}
+	
 	private static boolean between(int v, int upper) {
 		return (v >= 0) && (v < upper);
 	}

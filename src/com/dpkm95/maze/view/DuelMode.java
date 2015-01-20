@@ -201,7 +201,6 @@ public class DuelMode extends View {
 			// print horizontal lines
 			for (int j = 0; j < mRows; j++) {
 				if ((mMaze[j][i] & 1) == 0) {
-					checkCollision(px, py, false);
 					canvas.drawRect(px, py, px + 5 * unit, py + unit, paint1);
 					px += 5 * unit;
 				} else {
@@ -214,57 +213,31 @@ public class DuelMode extends View {
 			// print vertical lines
 			for (int j = 0; j < mRows; j++) {
 				if ((mMaze[j][i] & 8) == 0) {
-					checkCollision(px, py, true);
 					canvas.drawRect(px, py, px + unit, py + 5 * unit, paint1);
 					px += 5 * unit;
 				} else {
 					px += 5 * unit;
 				}
 			}
-			checkCollision(px, py, true);
 			canvas.drawRect(px, py, px + unit, py + 5 * unit, paint1);
 			py += 5 * unit;
 			px = mazeX;
 		}
 		// print bottom line
 		for (int i = 0; i < mRows; ++i) {
-			checkCollision(px + 5 * i * unit, py, false);
 			canvas.drawRect(px + 5 * i * unit, py, px + 5 * (i + 1) * unit, py
 					+ unit, paint1);
 		}
-		canvas.drawRect(px + 5 * mRows * unit, py, px + 5 * mRows * unit + unit,
-				py + unit, paint1);
+		canvas.drawRect(px + 5 * mRows * unit, py, px + 5 * mRows * unit + unit, py
+				+ unit, paint1);
 	}
 
-	private void checkCollision(float px, float py, boolean dir) {
-		ballX = mazeX + 5 * unit * player.x + 3 * unit;
-		ballY = mazeY + 5 * unit * player.y + 3 * unit;
-		ballXf = mazeX + 5 * unit * player.fx + 3 * unit;
-		ballYf = mazeY + 5 * unit * player.fy + 3 * unit;
-
-		if (dir) {
-			// move right
-			if (right.pressed && ballX < px && px < ballXf && py < ballY
-					&& ballY < py + 4 * unit) {
-				mGameState = MazeConstants.STATE_CRASH;
-			}
-			// move left
-			if (left.pressed && ballXf < px + unit && px + unit < ballX
-					&& py < ballY && ballY < py + 4 * unit) {
-				mGameState = MazeConstants.STATE_CRASH;
-			}
-		} else {
-			// move down
-			if (down.pressed && ballY < py && py < ballYf && px < ballX
-					&& ballX < px + 4 * unit) {
-				mGameState = MazeConstants.STATE_CRASH;
-			}
-			// move up
-			if (up.pressed && ballYf < py + unit && py + unit < ballY
-					&& px < ballX && ballX < px + 4 * unit) {
-				mGameState = MazeConstants.STATE_CRASH;
-			}
-		}
+	private boolean checkCollision() {
+		if(down.pressed && (mMaze[player.x][player.y]>>1 & 1)!=1) return true;
+		else if(up.pressed && (mMaze[player.x][player.y]&1)!=1) return true;
+		else if(left.pressed && (mMaze[player.x][player.y]>>3 &1)!=1) return true;
+		else if(right.pressed && (mMaze[player.x][player.y]>>2 &1)!=1) return true;
+		return false;
 	}
 
 	// paints the non-maze part of screen
@@ -312,8 +285,8 @@ public class DuelMode extends View {
 					paint2i);
 	}
 	
-	public void setDrawState(int state) {
-		mGameState = state;
+	public void setDrawState(int mGameState) {
+		mGameState = mGameState;
 		invalidate();
 	}
 
@@ -484,19 +457,31 @@ public class DuelMode extends View {
 				if (H - 3*control_width < event.getY()
 						&& event.getY() < H - 2*control_width) {
 					up.pressed = true;
-					player.fy -= 1;
+					if(!checkCollision())
+						player.fy -= 1;
+					else
+						mGameState = MazeConstants.STATE_CRASH;
 				} else if (H - control_width < event.getY() && event.getY() < H) {
 					down.pressed = true;
-					player.fy += 1;
+					if(!checkCollision())
+						player.fy += 1;
+					else
+						mGameState = MazeConstants.STATE_CRASH;
 				}
 			} else if (event.getY() > H-control_width) {
 				if (W - 3*control_width < event.getX()
 						&& event.getX() < W - 2*control_width) {
 					left.pressed = true;
-					player.fx -= 1;
+					if(!checkCollision())
+						player.fx -= 1;
+					else
+						mGameState = MazeConstants.STATE_CRASH;
 				} else if (W - control_width < event.getX() && event.getX() < W) {
 					right.pressed = true;
-					player.fx += 1;
+					if(!checkCollision())
+						player.fx += 1;
+					else
+						mGameState = MazeConstants.STATE_CRASH;
 				}
 			}
 			break;
