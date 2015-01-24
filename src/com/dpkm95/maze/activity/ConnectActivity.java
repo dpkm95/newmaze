@@ -262,12 +262,6 @@ public class ConnectActivity extends Activity {
 				break;
 			}
 		}
-
-		private void sendOwnSize() {
-			Message size = new Message();
-			size.arg2 = MazeConstants.SIZE ? 1 : 0;
-			sendMessage(size);
-		}
 	};
 
 	public void onActivityResult(int requestCode, int resultCode, Intent data) {

@@ -152,8 +152,7 @@ public class FlexibleMazeActivity extends Activity {
 		Display display = getWindowManager().getDefaultDisplay();
 		Point size = new Point();
 		display.getSize(size);
-		mDrawView = new DuelMode(this, mIntMaze,
-				mHandler);
+		mDrawView = new DuelMode(this, mIntMaze, mHandler);
 		mDrawView.setBackgroundColor(Color.WHITE);
 		mDrawView.setOnClickListener(endActivityOnClickListener);
 		setContentView(mDrawView);
@@ -168,8 +167,9 @@ public class FlexibleMazeActivity extends Activity {
 	 */
 	public void decodeMessage(String message) {
 		String[] parts = message.split(":");
-		try{//TODO TECHICAL DEBT! ENSURE NON-NUMBERS ARE NOT SENT!
-			int what = Integer.parseInt(parts[0]);switch (what) {
+		try {// TODO TECHNICAL DEBT! ENSURE NON-NUMBERS ARE NOT SENT!
+			int what = Integer.parseInt(parts[0]);
+			switch (what) {
 			case MazeConstants.EVENT_CRASH:
 				onOpponentCrash();
 				break;
@@ -182,16 +182,18 @@ public class FlexibleMazeActivity extends Activity {
 						Integer.parseInt(parts[2]));
 				break;
 			}
-		}catch(NumberFormatException e){
+		} catch (NumberFormatException e) {
 			return;
 		}
 	}
+
 	@Override
-	public void onStop(){
+	public void onStop() {
 		super.onStop();
-		Intent i = new Intent(this,BluetoothChatService.class);
+		Intent i = new Intent(this, BluetoothChatService.class);
 		stopService(i);
 	}
+
 	private void sendMessage(String message) {
 		// Check that we're actually connected before trying anything
 		if (mChatService.getState() != BluetoothChatService.STATE_CONNECTED) {
@@ -224,7 +226,7 @@ public class FlexibleMazeActivity extends Activity {
 
 	// on<Event> functions below are expected to be called only by mDrawView
 	public void onCrash() {
-		// no need to update mDrawView's drawState as it alreayd knows when this
+		// no need to update mDrawView's drawState as it already knows when this
 		// function is called
 		if (!eventCommunicated) {// as drawView will inform in each onDraw
 			eventCommunicated = true;
@@ -240,8 +242,7 @@ public class FlexibleMazeActivity extends Activity {
 	}
 
 	public void onOwnPositionUpdate(int x, int y) {
-		sendMessage(MazeConstants.EVENT_POSITION_UPDATE + ":" + x + ":"
-				+ y);
+		sendMessage(MazeConstants.EVENT_POSITION_UPDATE + ":" + x + ":" + y);
 		Log.d("ownPos", "o" + x + ":" + y);
 	}
 
@@ -252,6 +253,6 @@ public class FlexibleMazeActivity extends Activity {
 
 	public void updateOpponentKeys(int x, int y) {
 		// TODO Auto-generated method stub
-		
+
 	}
 }

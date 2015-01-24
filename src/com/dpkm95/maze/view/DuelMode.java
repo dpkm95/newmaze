@@ -57,8 +57,8 @@ public class DuelMode extends View {
 		root = (FlexibleMazeActivity) context;
 		W = getResources().getDisplayMetrics().widthPixels;
 		H = getResources().getDisplayMetrics().heightPixels;
-		this.mCols = maze.length;
-		this.mRows = maze[0].length;
+		this.mCols = maze[0].length;
+		this.mRows = maze.length;
 
 		this.unit = getUnitSize(H, mRows);
 		mazeX = (W - (unit * 5 * mCols + unit)) / 2;
@@ -70,7 +70,7 @@ public class DuelMode extends View {
 		control_width = (H-mazeYf);
 
 		this.mMaze = maze;
-		lpf = new LongestPathFinder(maze, mCols, mRows);
+		lpf = new LongestPathFinder(maze, maze.length, maze[0].length);
 		retPath = lpf.getLongestPath();
 		keys = lpf.getEndPoints();
 		key_count = keys.getSize();
@@ -285,8 +285,8 @@ public class DuelMode extends View {
 					paint2i);
 	}
 	
-	public void setDrawState(int mGameState) {
-		mGameState = mGameState;
+	public void setDrawState(int state) {
+		mGameState=state;
 		invalidate();
 	}
 
