@@ -34,7 +34,7 @@ public class FlexibleMazeActivity extends Activity {
 
 	public static final int QUIT_DELAY = 2000;// in milliseconds
 	// BT STARTS
-	private static final String TAG = "BluetoothChat";
+	private static final String TAG = "FlexibleMazeActivity";
 	private static final boolean D = true;
 
 	// Message types sent from the BluetoothChatService Handler
@@ -117,9 +117,6 @@ public class FlexibleMazeActivity extends Activity {
 			// we don't care about EVENT_LOSS as opponent loss can only be
 			// caused by our win
 			switch (msg.what) {
-			case MazeConstants.EVENT_CRASH:
-				onCrash();
-				break;
 			case MazeConstants.EVENT_WIN:
 				onWin();
 				break;
@@ -130,7 +127,7 @@ public class FlexibleMazeActivity extends Activity {
 				onBackPressed();
 				break;
 			}
-		}
+		}	
 	};
 
 	@Override
@@ -170,14 +167,12 @@ public class FlexibleMazeActivity extends Activity {
 		try {// TODO TECHNICAL DEBT! ENSURE NON-NUMBERS ARE NOT SENT!
 			int what = Integer.parseInt(parts[0]);
 			switch (what) {
-			case MazeConstants.EVENT_CRASH:
-				onOpponentCrash();
-				break;
 			case MazeConstants.EVENT_WIN:
 				onOpponentWin();
 				break;
 			// no onOpponentLoss as his loss is determined only by your win
 			case MazeConstants.EVENT_POSITION_UPDATE:
+				//Log.d(TAG, "PU "+Integer.parseInt(parts[1])+":"+Integer.parseInt(parts[2]));	
 				updateOpponentPosition(Integer.parseInt(parts[1]),
 						Integer.parseInt(parts[2]));
 				break;
@@ -185,7 +180,7 @@ public class FlexibleMazeActivity extends Activity {
 		} catch (NumberFormatException e) {
 			return;
 		}
-	}
+	}	
 
 	@Override
 	public void onStop() {
@@ -211,28 +206,12 @@ public class FlexibleMazeActivity extends Activity {
 	// No onOpponentLoss() as opponent's loss is determined by your winning
 	// only.
 	// In case you win he is informed by the onWin() function
-	public void onOpponentCrash() {
-		eventCommunicated = true;// to prevent us from sending another message
-									// back
-		Toast.makeText(this, "Victory!", Toast.LENGTH_LONG).show();
-		mDrawView.setDrawState(MazeConstants.STATE_WIN);
-	}
 
 	public void onOpponentWin() {
 		eventCommunicated = true;// not necessary as STATE_LOSS has no callback
 									// mechanism
-		mDrawView.setDrawState(MazeConstants.STATE_WIN);
-	}
-
-	// on<Event> functions below are expected to be called only by mDrawView
-	public void onCrash() {
-		// no need to update mDrawView's drawState as it already knows when this
-		// function is called
-		if (!eventCommunicated) {// as drawView will inform in each onDraw
-			eventCommunicated = true;
-			sendMessage("" + MazeConstants.EVENT_CRASH);
-		}
-	}
+		mDrawView.setGameState(MazeConstants.STATE_LOSS);
+	}	
 
 	public void onWin() {
 		if (!eventCommunicated) {
@@ -243,16 +222,11 @@ public class FlexibleMazeActivity extends Activity {
 
 	public void onOwnPositionUpdate(int x, int y) {
 		sendMessage(MazeConstants.EVENT_POSITION_UPDATE + ":" + x + ":" + y);
-		Log.d("ownPos", "o" + x + ":" + y);
+		//Log.d(TAG, "onOwnPosUpdate " + x + ":" + y);
 	}
-
+	
 	public void updateOpponentPosition(int x, int y) {
 		mDrawView.updateOpponentPosition(x, y);
-		Log.d("oppPos", "opp" + x + ":" + y);
-	}
-
-	public void updateOpponentKeys(int x, int y) {
-		// TODO Auto-generated method stub
-
+		//Log.d(TAG, "updateOppPos " + x + ":" + y);
 	}
 }

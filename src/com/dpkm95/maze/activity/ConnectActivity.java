@@ -70,8 +70,12 @@ public class ConnectActivity extends Activity {
 	}
 
 	public void generateOwnMaze() {
-		MazeGenerator mg = new MazeGenerator(MazeConstants.MAZE_ROWS,
-				MazeConstants.MAZE_COLS);
+		MazeGenerator mg;
+		if (MazeConstants.SIZE) {
+			mg = new MazeGenerator(16,10);
+		} else {
+			mg = new MazeGenerator(12,8);
+		}		 
 		mOwnMaze = mg.getMaze();
 	}
 
@@ -247,8 +251,6 @@ public class ConnectActivity extends Activity {
 					break;
 				}
 				startGame(mOwnMaze, mOppMaze);
-				Toast.makeText(ConnectActivity.this, "mr:\n" + readMessage,
-						Toast.LENGTH_SHORT).show();
 				break;
 			case MESSAGE_DEVICE_NAME:
 				// save the connected device's name

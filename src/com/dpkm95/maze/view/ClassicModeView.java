@@ -224,8 +224,8 @@ public class ClassicModeView extends View {
 		msg.what = MazeConstants.EVENT_POSITION_UPDATE;
 		Bundle b = new Bundle();
 		Log.d("VIEW","pos"+xFract+":"+yFract);
-		b.putFloat(MazeConstants.PositionUpdates.KEY_X_FRACTION, xFract);		
-		b.putFloat(MazeConstants.PositionUpdates.KEY_Y_FRACTION, yFract);	
+		b.putFloat(MazeConstants.PositionUpdates.KEY_X, xFract);		
+		b.putFloat(MazeConstants.PositionUpdates.KEY_Y, yFract);	
 		msg.setData(b);
 		mHandler.sendMessage(msg);
 	}

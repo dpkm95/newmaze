@@ -145,7 +145,6 @@ public class ClassicResumeMode extends View {
 		key_count = 1;
 		player.score = 0;
 				
-		mg = new MazeGenerator(x, y);
 		keys = new Stack();
 		try {
 			Object[] o = Archiver.get_game_state(m_context, root);
@@ -153,17 +152,17 @@ public class ClassicResumeMode extends View {
 			int[][] k = (int[][]) o[1];
 			for (int i = 0; i < k.length; ++i)
 				keys.insert(k[i][0], k[i][1]);
-			player.fx = player.x = (int) o[2];
-			player.fy = player.y = (int) o[3];
-			destX    = (int) o[4];
-			destY    = (int) o[5];
-			key_count = (int) o[6];
-			player.score = (int) o[7];
-			player.life = (float) o[8];
-			life_number = (int) o[9];
-			teleX = (int) o[10];
-			teleY = (int) o[11];
-			teleport = (boolean) o[12];
+			player.fx = player.x = (Integer) o[2];
+			player.fy = player.y = (Integer) o[3];
+			destX    = (Integer) o[4];
+			destY    = (Integer) o[5];
+			key_count = (Integer) o[6];
+			player.score = (Integer) o[7];
+			player.life = (Float) o[8];
+			life_number = (Integer) o[9];
+			teleX = (Integer) o[10];
+			teleY = (Integer) o[11];
+			teleport = (Boolean) o[12];
 
 		} catch (ClassNotFoundException | IOException e) {
 			e.printStackTrace();
@@ -350,7 +349,7 @@ public class ClassicResumeMode extends View {
 
 	// method to paint the remaining keys at end-points
 	private void paintKeys(Canvas canvas) {
-		keys = checkKeyStatus(keys);
+		checkKeyStatus();
 		Node key = keys.top();
 		paint.setColor(Color.rgb(255, 208, 47));
 		while (key != null) {
@@ -361,7 +360,7 @@ public class ClassicResumeMode extends View {
 	}
 
 	// checks if the ball collides with any of the remaining-keys
-	private Stack checkKeyStatus(Stack keys) {
+	private void checkKeyStatus() {
 		Node key = keys.top();
 		while (key != null) {
 			if (player.x == key.getX() && player.y == key.getY()) {
@@ -383,7 +382,6 @@ public class ClassicResumeMode extends View {
 			}
 			key = key.getNext();
 		}
-		return keys;
 	}
 
 	private void paintPlayer(Canvas canvas) {

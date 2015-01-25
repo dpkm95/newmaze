@@ -56,8 +56,8 @@ public class ClassicMode extends View {
 		this.m_context = context;
 		root = (ClassicActivity) context;
 		W = getResources().getDisplayMetrics().widthPixels;
-		H = getResources().getDisplayMetrics().heightPixels;
-
+		H = getResources().getDisplayMetrics().heightPixels;		
+		
 		if (MazeConstants.SIZE) {
 			x = 16;
 			y = 10;
@@ -85,22 +85,49 @@ public class ClassicMode extends View {
 		mazeY = unit;
 		mazeXf = mazeX + unit * 5 * x + unit;
 		mazeYf = mazeY + unit * 5 * y + unit;
-		player = new Pawn(0, 0);
-		player.fx = teleX = 0;
-		player.fy = teleY = 0;
-		key_count = 1;
-		life_number = 1;
+		player = new Pawn(0, 0);		
 		control_width = (H-mazeYf);
 
-		mg = new MazeGenerator(x, y);
-		maze = mg.getMaze();
-		lpf = new LongestPathFinder(maze, x, y);
-		retPath = lpf.getLongestPath();
-		keys = lpf.getEndPoints();
-		key_count = keys.getSize();
-		player.score = 0;
-		destX = retPath.topX();
-		destY = retPath.topY();
+		if(MazeConstants.PLAY){
+			keys = new Stack();
+			try {
+				Object[] o = Archiver.get_game_state(m_context, root);
+				maze = (int[][]) o[0];
+				int[][] k = (int[][]) o[1];
+				for (int i = 0; i < k.length; ++i)
+					keys.insert(k[i][0], k[i][1]);
+				player.fx = player.x = (Integer) o[2];
+				player.fy = player.y = (Integer) o[3];
+				destX    = (Integer) o[4];
+				destY    = (Integer) o[5];
+				key_count = (Integer) o[6];
+				player.score = (Integer) o[7];
+				player.life = (Float) o[8];
+				life_number = (Integer) o[9];
+				teleX = (Integer) o[10];
+				teleY = (Integer) o[11];
+				teleport = (Boolean) o[12];
+
+			} catch (ClassNotFoundException | IOException e) {
+				e.printStackTrace();
+			}
+		}else{
+			mg = new MazeGenerator(x, y);
+			maze = mg.getMaze();
+			lpf = new LongestPathFinder(maze, x, y);
+			retPath = lpf.getLongestPath();
+			keys = lpf.getEndPoints();
+			key_count = keys.getSize();
+			player.score = 0;
+			destX = retPath.topX();
+			destY = retPath.topY();
+			player.fx = teleX = 0;
+			player.fy = teleY = 0;
+			key_count = 1;
+			life_number = 1;
+		}
+		
+		
 
 		restoreX = restoreY = 0;
 		MazeConstants.RESUMABLE=true;
@@ -179,26 +206,26 @@ public class ClassicMode extends View {
 			if (state != MazeConstants.STATE_CRASH)
 				paintPlayer(canvas);
 			break;
-		case MazeConstants.STATE_CRASH:
-			if (MazeConstants.VIBRATION)
-				vibrator.vibrate(pattern_crash, -1);
+		case MazeConstants.STATE_CRASH:			
 			paintLoading(canvas);
 			if (Math.ceil(player.life) != 100) {
-				if (Archiver.get_top_score(root) < player.score)
-					new_high_score=true;
-				if (MazeConstants.VIBRATION)
-					vibrator.vibrate(pattern_win, -1);
-				if (archive) {					
+				
+				
+				if (archive) {
+					if (MazeConstants.VIBRATION)
+						vibrator.vibrate(pattern_win, -1);
+					if (Archiver.get_top_score(root) < player.score){
+						new_high_score=true;
+						if (MazeConstants.TONE)
+							mp_highscore.start();
+					}else{
+						if (MazeConstants.TONE)
+							mp_end.start();
+					}
 					Archiver.save_classic_score(root, player.score);															
 					archive = false;
 				}
-				if (new_high_score) {
-					if (MazeConstants.TONE)
-						mp_highscore.start();
-				} else {
-					if (MazeConstants.TONE)
-						mp_end.start();
-				}
+				
 				paintCrash(canvas);
 				MazeConstants.RESUMABLE = false;
 				new Timer().schedule(new TimerTask() {
@@ -207,6 +234,8 @@ public class ClassicMode extends View {
 					}
 				}, 1500);
 			} else {
+				if (MazeConstants.VIBRATION)
+					vibrator.vibrate(pattern_crash, -1);
 				if (MazeConstants.TONE)
 					mp_bump.start();
 				player.life -= life_number * (100 / (life_number + 1));
@@ -228,7 +257,7 @@ public class ClassicMode extends View {
 	public void onWindowFocusChanged(boolean hasFocus) {
 		super.onWindowFocusChanged(hasFocus);
 		if (!hasFocus)
-			try {
+			try {				
 				Stack keys_copy = new Stack();
 				keys_copy.copy(keys);
 				Archiver.save_game_state(m_context, root, maze, player.x,
@@ -339,7 +368,7 @@ public class ClassicMode extends View {
 
 	// method to paint the remaining keys at end-points
 	private void paintKeys(Canvas canvas) {
-		keys = checkKeyStatus(keys);
+		checkKeyStatus();
 		Node key = keys.top();
 		paint.setColor(Color.rgb(255, 208, 47));
 		while (key != null) {
@@ -350,7 +379,7 @@ public class ClassicMode extends View {
 	}
 
 	// checks if the ball collides with any of the remaining-keys
-	private Stack checkKeyStatus(Stack keys) {
+	private void checkKeyStatus() {
 		Node key = keys.top();
 		while (key != null) {
 			if (player.x == key.getX() && player.y == key.getY()) {
@@ -372,13 +401,9 @@ public class ClassicMode extends View {
 			}
 			key = key.getNext();
 		}
-		return keys;
 	}
 
-	private void paintPlayer(Canvas canvas) {
-		
-		
-		
+	private void paintPlayer(Canvas canvas) {		
 		player.x = player.fx;
 		player.y = player.fy;
 		if (player.x == destX && player.y == destY && key_count == 0) {

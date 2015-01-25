@@ -271,7 +271,6 @@ public class LaunchView extends View {
 					MazeConstants.COLOR);
 		}else{
 			invalidate();
-			Log.d("focus changed", "invalidated");
 		}
 	}
 
@@ -592,38 +591,24 @@ public class LaunchView extends View {
 				break;
 			case 3:
 				paint2.setTextSize(4 * unit);
-				canvas.drawText("Duel mode stats:", hot_b1_ix + 2 * unit,
-						hot_b1_fy + 6 * unit, paint2);
+				scores = Archiver.get_duel_scores(root);
+				canvas.drawText("Duel mode top scores:", hot_b1_ix + 2
+						* unit, hot_b1_fy + 6 * unit, paint2);
 				paint2.setTextSize(3 * unit);
-				canvas.drawText("Initiated ", hot_b1_ix + 4 * unit,
-						acheivements_iy + 2.5f * unit, paint2);
-				canvas.drawText("Accepted ", hot_b1_ix + 4 * unit, settings_iy
-						+ 2.5f * unit, paint2);
-
-				canvas.drawText("won :  ", hot_b1_ix + 6 * unit,
-						acheivements_iy + 6.5f * unit, paint2);
-				canvas.drawText("keys :  ", hot_b1_ix + 6 * unit,
-						acheivements_iy + 10.5f * unit, paint2);
-				canvas.drawText("won :  ", hot_b1_ix + 6 * unit, settings_iy
-						+ 6.5f * unit, paint2);
-				canvas.drawText("keys :  ", hot_b1_ix + 6 * unit, settings_iy
-						+ 10.5f * unit, paint2);
-				paint1.setTextSize(12*unit);
-				i=0;j=0;
-				while(j>0){
-					j/=10;
-					i++;
+				canvas.drawText("won by:", hot_b1_ix + 2
+						* unit, hot_b1_fy + 10 * unit, paint2);
+				for (i = 0; i < 5; ++i) {
+					canvas.drawText(i + 1 + ") " + Integer.toString(scores[i])+" keys",
+							hot_b1_ix + hot_w / 4, hot_b1_fy + (14 + 5 * i)
+									* unit, paint2);
 				}
-			    canvas.drawText(Integer.toString(0),W-i*(hot_w/3),acheivements_fy-8*unit, paint1);
+				canvas.drawText("won     :  " + Integer.toString(scores[5]),
+						hot_b1_ix + 2
+						* unit, hot_b1_fy + 42 * unit, paint2);
+				canvas.drawText("played :  " + Integer.toString(scores[6]),
+						hot_b1_ix + 2
+						* unit, hot_b1_fy + 46 * unit, paint2);
 				
-				paint1.setTextSize(12*unit);
-				i=0;j=0;
-				while(j>0){
-					j/=10;
-					i++;
-				}
-			    canvas.drawText(Integer.toString(0),W-i*(hot_w/3),settings_fy-8*unit,paint1);
-				break;
 			}
 
 			break;

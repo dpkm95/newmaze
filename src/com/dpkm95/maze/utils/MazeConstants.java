@@ -9,7 +9,7 @@ public class MazeConstants {
 	public static boolean VIBRATION = true;
 	public static boolean RESUMABLE = false;
 	public static final int QUIT_MAZE = 0;
-	public static final int EVENT_CRASH = 2;
+	public static final int EVENT_KEY_UPDATE = 2;
 	public static final int EVENT_WIN = 3;
 	public static final int EVENT_LOSS = 1;
 	public static final  int EVENT_POSITION_UPDATE = 4;
@@ -18,6 +18,7 @@ public class MazeConstants {
 	public final static int STATE_WIN = 3;
 	public final static int STATE_LOSS = 4;
 	public static int COLOR = 4;
+	public static boolean PLAY;
 
 
 	public static class PositionUpdates {

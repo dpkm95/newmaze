@@ -1,5 +1,8 @@
 package com.dpkm95.maze.view;
 
+import java.util.Timer;
+import java.util.TimerTask;
+
 import com.dpkm95.maze.activity.FlexibleMazeActivity;
 import com.dpkm95.maze.utils.*;
 import android.annotation.SuppressLint;
@@ -15,10 +18,12 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.os.Vibrator;
+import android.util.Log;
 import android.util.SparseArray;
 import android.view.MotionEvent;
 import android.view.View;
 
+import com.dpkm95.maze.utils.Archiver;
 import com.dpkm95.maze.utils.GameControl;
 import com.dpkm95.maze.utils.MazeConstants;
 import com.dpkm95.maze.utils.Node;
@@ -30,7 +35,7 @@ public class DuelMode extends View {
 	private Paint paint, paint0, paint1, paint2, paint2i, paint3, paint3i;
 	private float W, H;
 	private float ballX, ballY,ballXf,ballYf;
-	private int mCols, mRows;
+	private int y, x;
 	private int mGameState = MazeConstants.STATE_PLAY;
 	private float mazeX, mazeY, mazeXf, mazeYf,control_width;
 	private float unit;	
@@ -41,7 +46,7 @@ public class DuelMode extends View {
 	private Stack retPath, keys;
 	private int destX, destY;
 	private int key_count = 0;
-	private boolean teleport = false;
+	private boolean teleport = false,archive=true;
 	private int restoreX = 0, restoreY = 0,teleX, teleY;
 	private Handler mHandler;
 	private GameControl up, down, left, right;
@@ -57,14 +62,15 @@ public class DuelMode extends View {
 		root = (FlexibleMazeActivity) context;
 		W = getResources().getDisplayMetrics().widthPixels;
 		H = getResources().getDisplayMetrics().heightPixels;
-		this.mCols = maze[0].length;
-		this.mRows = maze.length;
-
-		this.unit = getUnitSize(H, mRows);
-		mazeX = (W - (unit * 5 * mCols + unit)) / 2;
+		this.y = maze[0].length;
+		this.x = maze.length;
+		if(x==16) unit = (float) ((H * 0.8) / (y * 5));
+		if(x==12) unit = (float) ((H * 0.8) / (y * 5.5));
+		unit = (float) ((H * 0.8) / (y * 5.5));
+		mazeX = (W - (unit * 5 * x + unit)) / 2;
 		mazeY = unit;
-		mazeXf = mazeX + unit * 5 * mCols + unit;
-		mazeYf = mazeY + unit * 5 * mRows + unit;
+		mazeXf = mazeX + unit * 5 * x + unit;
+		mazeYf = mazeY + unit * 5 * y + unit;
 		ballX = mazeX + 3 * unit;
 		ballY = mazeY + 3 * unit;
 		control_width = (H-mazeYf);
@@ -169,37 +175,50 @@ public class DuelMode extends View {
 			break;
 		case MazeConstants.STATE_CRASH:
 			if (MazeConstants.VIBRATION)
-				vibrator.vibrate(pattern_crash, -1);			
-			//paintCrash(canvas);
-			//postCrashMessage(mHandler);
+				vibrator.vibrate(pattern_crash, -1);
 			restoreBall();
 			break;
-		case MazeConstants.STATE_WIN:
-			if (MazeConstants.VIBRATION)
-				vibrator.vibrate(pattern_win, -1);
-			if (MazeConstants.TONE)
-				mp_win.start();
+		case MazeConstants.STATE_WIN:			
+			if (archive) {		
+				if (MazeConstants.VIBRATION)
+					vibrator.vibrate(pattern_win, -1);
+				if (MazeConstants.TONE)
+					mp_win.start();
+				Archiver.save_duel_score(root, player.score-opponent.score);															
+				archive = false;
+			}
 			paintWinner(canvas);
-			postWinMessage(mHandler);
+			postWinMessage();
+			new Timer().schedule(new TimerTask() {
+				public void run() {
+					root.finish();
+				}
+			}, 1500);
 			break;
 		case MazeConstants.STATE_LOSS:
-			paintLoss(canvas);
-			if (MazeConstants.VIBRATION)
-				vibrator.vibrate(pattern_crash, -1);
-			if (MazeConstants.TONE)
-				mp_end.start();
-			// postLossMessage(mHandler); no need as your loss is detected by
-			// outlying activity from opponent win only. Hence activity already
-			// knows about it
+			paintLoss(canvas);			
+			new Timer().schedule(new TimerTask() {
+				public void run() {
+					root.finish();
+				}
+			}, 1500);
+			if (archive) {		
+				if (MazeConstants.VIBRATION)
+					vibrator.vibrate(pattern_crash, -1);
+				if (MazeConstants.TONE)
+					mp_end.start();
+				Archiver.save_duel_score(root);															
+				archive = false;
+			}
 			break;
 		}
 	}
 
 	private void paintMaze(Canvas canvas) {
 		float px = mazeX, py = mazeY;
-		for (int i = 0; i < mCols; i++) {
+		for (int i = 0; i < y; i++) {
 			// print horizontal lines
-			for (int j = 0; j < mRows; j++) {
+			for (int j = 0; j < x; j++) {
 				if ((mMaze[j][i] & 1) == 0) {
 					canvas.drawRect(px, py, px + 5 * unit, py + unit, paint1);
 					px += 5 * unit;
@@ -211,7 +230,7 @@ public class DuelMode extends View {
 			canvas.drawRect(px, py, px + unit, py + unit, paint1);
 			px = mazeX;
 			// print vertical lines
-			for (int j = 0; j < mRows; j++) {
+			for (int j = 0; j < x; j++) {
 				if ((mMaze[j][i] & 8) == 0) {
 					canvas.drawRect(px, py, px + unit, py + 5 * unit, paint1);
 					px += 5 * unit;
@@ -224,11 +243,11 @@ public class DuelMode extends View {
 			px = mazeX;
 		}
 		// print bottom line
-		for (int i = 0; i < mRows; ++i) {
+		for (int i = 0; i < x; ++i) {
 			canvas.drawRect(px + 5 * i * unit, py, px + 5 * (i + 1) * unit, py
 					+ unit, paint1);
 		}
-		canvas.drawRect(px + 5 * mRows * unit, py, px + 5 * mRows * unit + unit, py
+		canvas.drawRect(px + 5 * x * unit, py, px + 5 * x * unit + unit, py
 				+ unit, paint1);
 	}
 
@@ -285,20 +304,10 @@ public class DuelMode extends View {
 					paint2i);
 	}
 	
-	public void setDrawState(int state) {
+	public void setGameState(int state) {
 		mGameState=state;
 		invalidate();
-	}
-
-	private void postOwnPosition(){
-		Message msg = mHandler.obtainMessage();
-		msg.what = MazeConstants.EVENT_POSITION_UPDATE;
-		Bundle b = new Bundle();
-		b.putInt(MazeConstants.PositionUpdates.KEY_X, player.x);		
-		b.putInt(MazeConstants.PositionUpdates.KEY_Y, player.y);	
-		msg.setData(b);
-		mHandler.sendMessage(msg);
-	}
+	}	
 
 	private void paintDestination(Canvas canvas) {
 		paint.setColor(Color.rgb(200, 200, 200));
@@ -314,7 +323,7 @@ public class DuelMode extends View {
 
 	// method to paint the remaining keys at end-points
 	private void paintKeys(Canvas canvas) {
-		keys = checkKeyStatus(keys);
+		checkKeyStatus();
 		Node key = keys.top();
 		paint.setColor(Color.rgb(255, 208, 47));
 		while (key != null) {
@@ -324,11 +333,47 @@ public class DuelMode extends View {
 		}
 	}
 
-	private void updateKeys(int x,int y){
+	public void updateKeys(int x,int y){
 		Node key = keys.top();
 		while (key != null) {
 			if (x == key.getX() && y == key.getY()) {
 				--key_count;	
+				++opponent.score;
+				if (key.getNext() == null) {
+					Log.d("update_key", "end " + x + ":" + y);	
+					keys.removeLastNode();
+				} else {
+					Log.d("update_key", x + ":" + y);	
+					key.removeCurrentNode();
+					keys.dec_size();
+				}
+			}
+			key = key.getNext();
+		}		
+	}
+	
+	// checks if the ball collides with any of the remaining-keys
+	private void checkKeyStatus() {
+		Node key = keys.top();
+		while (key != null) {
+			if (player.x == key.getX() && player.y == key.getY()) {
+				--key_count;
+				//postKeyUpdate(x,y);
+				++player.score;
+				if (MazeConstants.TONE)
+					mp_key.start();
+				restoreX = key.getX();
+				restoreY = key.getY();
+				if (key.getNext() == null) {
+					keys.removeLastNode();
+				} else {
+					key.removeCurrentNode();
+					keys.dec_size();
+				}
+			}			
+			else if (opponent.x == key.getX() && opponent.y == key.getY()) {
+				--key_count;
+				//postKeyUpdate(x,y);
 				++opponent.score;
 				if (key.getNext() == null) {
 					keys.removeLastNode();
@@ -340,39 +385,13 @@ public class DuelMode extends View {
 			key = key.getNext();
 		}
 	}
-	
-	// checks if the ball collides with any of the remaining-keys
-	private Stack checkKeyStatus(Stack keys) {
-		Node key = keys.top();
-		while (key != null) {
-			if (player.x == key.getX() && player.y == key.getY()) {
-				--key_count;
-				root.updateOpponentKeys(key.getX(),key.getY());
-				if (MazeConstants.TONE)
-					mp_key.start();
-				else
-					++player.score;
-				restoreX = key.getX();
-				restoreY = key.getY();
-				if (key.getNext() == null) {
-					keys.removeLastNode();
-				} else {
-					key.removeCurrentNode();
-					keys.dec_size();
-				}
-			}
-			key = key.getNext();
-		}
-		return keys;
-	}
 
 	private void paintPlayer(Canvas canvas) {
 		// reached end point
 		player.x = player.fx;
 		player.y = player.fy;
-		if (player.x == destX && player.y == destY && key_count == 0) {
-			restoreX = destX;
-			restoreY = destY;
+		if (player.x == destX && player.y == destY 
+				&& key_count == 0 && player.score >= opponent.score) {
 			mGameState = MazeConstants.STATE_WIN;
 		}
 		paint.setColor(Color.GRAY);
@@ -396,35 +415,45 @@ public class DuelMode extends View {
 		paint.setTextSize(5 * unit);
 		paint.setTypeface(Typeface.createFromAsset(root.getAssets(),
 				"fonts/gisha.ttf"));
-		canvas.drawText("You Won!", (W - 8 * 3 * unit) / 2, H / 2, paint);
-	}
+		canvas.drawText("You Won by "+Integer.toString(player.score-opponent.score)+" keys", (W - 15 * 3 * unit) / 2, H / 2, paint);
+	}		
 
-	private void postWinMessage(Handler h) {
-		Message msg = h.obtainMessage();
+	public void updateOpponentPosition(int x,int y){
+		opponent.x = x;
+		opponent.y = y;
+		invalidate();
+	}
+	
+	private void postOwnPosition(){
+		Message msg = mHandler.obtainMessage();
+		msg.what = MazeConstants.EVENT_POSITION_UPDATE;
+		Bundle b = new Bundle();
+		b.putInt(MazeConstants.PositionUpdates.KEY_X, player.x);		
+		b.putInt(MazeConstants.PositionUpdates.KEY_Y, player.y);	
+		msg.setData(b);
+		mHandler.sendMessage(msg);
+	}
+	
+	private void postWinMessage() {
+		Message msg = mHandler.obtainMessage();
 		msg.what = MazeConstants.EVENT_WIN;
-		h.sendMessage(msg);
+		mHandler.sendMessage(msg);
 	}
 
 	private void paintLoss(Canvas canvas) {
-		paint.setColor(Color.rgb(255, 145, 70));
+		paint.setColor(Color.rgb(154, 137, 211));
 		canvas.drawRect(0, 0, W, H, paint);
 		paint.setColor(Color.WHITE);
 		paint.setTextSize(5 * unit);
 		paint.setTypeface(Typeface.createFromAsset(root.getAssets(),
 				"fonts/gisha.ttf"));
-		canvas.drawText("You Lost!", (W - 9 * 3 * unit) / 2, H / 2, paint);
+		canvas.drawText("You Lose by"+Integer.toString(opponent.score-player.score)+" keys", (W - 15 * 3 * unit) / 2, H / 2, paint);
 		}
 
 	private void postQuitMessage() {
 		Message msg = mHandler.obtainMessage();
 		msg.what = MazeConstants.QUIT_MAZE;
 		mHandler.sendMessage(msg);
-	}
-
-	public void updateOpponentPosition(int x,int y){
-		opponent.x = x;
-		opponent.y = y;
-		invalidate();
 	}
 	
 	public boolean onTouchEvent(MotionEvent event) {

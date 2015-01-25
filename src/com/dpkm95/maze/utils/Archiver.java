@@ -1,18 +1,20 @@
 package com.dpkm95.maze.utils;
 
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.StreamCorruptedException;
 import java.util.Arrays;
 import java.util.List;
 import com.dpkm95.maze.activity.ChallengeActivity;
 import com.dpkm95.maze.activity.ClassicActivity;
 import com.dpkm95.maze.activity.ClassicResumeActivity;
+import com.dpkm95.maze.activity.FlexibleMazeActivity;
 import com.dpkm95.maze.activity.MainActivity;
 import android.content.Context;
-import android.util.Log;
 
 public class Archiver {
 	public static void save_classic_score(ClassicActivity root, int score) {
@@ -146,6 +148,99 @@ public class Archiver {
 				e.printStackTrace();
 			}
 		}
+	}
+
+	public static void save_duel_score(FlexibleMazeActivity root) {
+		String scores = read_duel_score(root);
+		List<String> score_list = Arrays.asList(scores.split(","));
+		String score_card = "";
+		for (int i = 0; i < 5; ++i) {
+			score_card += score_list.get(i)+",";
+		}
+		score_card+=score_list.get(5)
+				+","+Integer.toString(Integer.parseInt(score_list.get(6))+1);
+		
+		try {
+			FileOutputStream fOut = root.openFileOutput(
+					"duel_scores", Context.MODE_PRIVATE);
+			fOut.write(score_card.getBytes());
+			fOut.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}		
+	}
+	
+	public static int[] get_duel_scores(MainActivity root) {
+		int[] temp = new int[7];
+		try {
+			FileInputStream fin = root
+					.openFileInput("duel_scores");
+			int c;
+			String scores = "";
+			while ((c = fin.read()) != -1) {
+				scores = scores + Character.toString((char) c);
+			}
+			List<String> score_list = Arrays.asList(scores.split(","));
+			for (int i = 0; i < 5; ++i) {
+				temp[i] = Integer.parseInt(score_list.get(4 - i));
+			}
+			temp[5]=Integer.parseInt(score_list.get(5));
+			temp[6]=Integer.parseInt(score_list.get(6));
+			fin.close();
+		} catch (Exception e) {
+
+		}
+		return temp;
+	}
+
+	public static void save_duel_score(FlexibleMazeActivity root, int diff) {
+		String scores = read_duel_score(root);
+		List<String> score_list = Arrays.asList(scores.split(","));
+		int[] temp = new int[6];
+		for (int i = 0; i < 5; ++i) {
+			temp[i] = Integer.parseInt(score_list.get(i));
+		}
+
+		for (int i = 0; i < 5; ++i) {
+			if (temp[i] == diff)
+				return;
+		}
+
+		temp[5] = diff;
+		Arrays.sort(temp);
+
+		String score_card = "";
+		for (int i = 1; i < 6; ++i) {
+			score_card += Integer.toString(temp[i]) + ",";
+		}
+		score_card+=Integer.toString(Integer.parseInt(score_list.get(5)+1))
+				+","+Integer.toString(Integer.parseInt(score_list.get(6)+1));
+		
+		try {
+			FileOutputStream fOut = root.openFileOutput(
+					"duel_scores", Context.MODE_PRIVATE);
+			fOut.write(score_card.getBytes());
+			fOut.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
+	private static String read_duel_score(FlexibleMazeActivity root) {
+		try {
+			FileInputStream fin = root
+					.openFileInput("duel_scores");
+			int c;
+			String temp = "";
+			while ((c = fin.read()) != -1) {
+				temp = temp + Character.toString((char) c);
+			}
+			fin.close();
+			return temp;
+		} catch (Exception e) {
+
+		}
+		return "0,0,0,0,0,0,0";
 	}
 
 	private static String read_challenge_score(ChallengeActivity root) {
@@ -454,6 +549,44 @@ public class Archiver {
 		return o;
 	}	
 
+	public static Object[] get_game_state(Context m_context,
+			ClassicActivity root) throws IOException, ClassNotFoundException {
+		Object[] o = new Object[13];
+		FileInputStream fis = m_context.openFileInput("o_maze");
+		ObjectInputStream is = new ObjectInputStream(fis);
+		o[0] = (int[][]) is.readObject();
+		is.close();
+		fis = m_context.openFileInput("o_keys");
+		is = new ObjectInputStream(fis);
+		o[1] = (int[][]) is.readObject();
+		is.close();
+		String temp = "";
+		try {
+			FileInputStream fin = root.openFileInput("key_data");
+			int c;
+
+			while ((c = fin.read()) != -1) {
+				temp = temp + Character.toString((char) c);
+			}
+			List<String> key = Arrays.asList(temp.split(","));
+			o[2] = (int) Integer.parseInt(key.get(0));
+			o[3] = (int) Integer.parseInt(key.get(1));
+			o[4] = (int) Integer.parseInt(key.get(2));
+			o[5] = (int) Integer.parseInt(key.get(3));
+			o[6] = (int) Integer.parseInt(key.get(4));
+			o[7] = (int) Integer.parseInt(key.get(5));
+			o[8] = (float) Float.parseFloat(key.get(6));
+			o[9] = (int) Integer.parseInt(key.get(7));
+			o[10] = (int) Integer.parseInt(key.get(8));
+			o[11] = (int) Integer.parseInt((key.get(9)));
+			o[12] = (boolean) Boolean.parseBoolean(key.get(10));
+			fin.close();
+		} catch (Exception e) {
+
+		}
+		return o;
+	}
+	
 	private static String read_classic_score(ClassicResumeActivity root) {
 		if (MazeConstants.SIZE) {
 			try {
@@ -605,6 +738,5 @@ public class Archiver {
 			}
 		}
 		return temp[0];
-	}
-
+	}		
 }
