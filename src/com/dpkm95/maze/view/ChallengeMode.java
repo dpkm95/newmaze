@@ -74,10 +74,10 @@ public class ChallengeMode extends View {
 			this.oppSpeed = 30;
 			break;
 		case 2:
-			this.oppSpeed = 23;
+			this.oppSpeed = 22;
 			break;
 		case 3:
-			this.oppSpeed = 15;
+			this.oppSpeed = 12;
 			break;
 		}
 		mazeX = (W - (unit * 5 * x + unit)) / 2;
@@ -175,53 +175,53 @@ public class ChallengeMode extends View {
 			if (state != MazeConstants.STATE_CRASH)
 				paintPlayer(canvas);		    
 			break;
-		case MazeConstants.STATE_CRASH:			
-			if (MazeConstants.VIBRATION)
-				vibrator.vibrate(pattern, -1);
-			if (MazeConstants.TONE)
-				mp_end.start();
+		case MazeConstants.STATE_CRASH:
 			paintCrash(canvas);
 			if (archive) {
+				if (MazeConstants.VIBRATION)
+					vibrator.vibrate(pattern, -1);
+				if (MazeConstants.TONE)
+					mp_end.start();				
 				Archiver.save_challenge_score(root, m_context, 0);
 				archive = false;
-			}
-			new Timer().schedule(new TimerTask() {
-				public void run() {
-					root.finish();
-				}
-			}, 1500);
+				new Timer().schedule(new TimerTask() {
+					public void run() {
+						root.finish();
+					}
+				}, 1500);
+			}			
 			break;
 		case MazeConstants.STATE_WIN:			
+			paintWinner(canvas);
 			if (archive) {				
 				Archiver.save_challenge_score(root, m_context, 1);
 				archive = false;
-			}
-			if (MazeConstants.VIBRATION)
-				vibrator.vibrate(pattern, -1);
-			if (MazeConstants.TONE)
-				mp_win.start();
-			paintWinner(canvas);
-			new Timer().schedule(new TimerTask() {
-				public void run() {
-					root.finish();
-				}
-			}, 1500);
+				if (MazeConstants.VIBRATION)
+					vibrator.vibrate(pattern, -1);
+				if (MazeConstants.TONE)
+					mp_win.start();
+				new Timer().schedule(new TimerTask() {
+					public void run() {
+						root.finish();
+					}
+				}, 1500);				
+			}									
 			break;
-		case MazeConstants.STATE_LOSS:			
+		case MazeConstants.STATE_LOSS:
+			paintLoss(canvas);
 			if (archive) {
 				Archiver.save_challenge_score(root, m_context, 0);
 				archive = false;
-			}
-			if (MazeConstants.VIBRATION)
-				vibrator.vibrate(pattern, -1);
-			if (MazeConstants.TONE)
-				mp_end.start();
-			paintLoss(canvas);
-			new Timer().schedule(new TimerTask() {
-				public void run() {
-					root.finish();
-				}
-			}, 1500);
+				if (MazeConstants.VIBRATION)
+					vibrator.vibrate(pattern, -1);
+				if (MazeConstants.TONE)
+					mp_end.start();				
+				new Timer().schedule(new TimerTask() {
+					public void run() {
+						root.finish();
+					}
+				}, 1500);
+			}			
 			break;
 		}
 	}
@@ -421,7 +421,24 @@ public class ChallengeMode extends View {
 				}
 			}
 			break;
-		case MotionEvent.ACTION_MOVE:
+		case MotionEvent.ACTION_MOVE:{
+			if (event.getX() < control_width) {
+				if (H - 3*control_width < event.getY()
+						&& event.getY() < H - 2*control_width) {
+					up.pressed = true;
+				} else if (H - control_width < event.getY() && event.getY() < H) {
+					down.pressed = true;
+				}
+			} else if (event.getY() > H-control_width) {
+				if (W - 3*control_width < event.getX()
+						&& event.getX() < W - 2*control_width) {
+					left.pressed = true;
+				} else if (W - control_width < event.getX() && event.getX() < W) {
+					right.pressed = true;
+				}
+			}
+			break;
+		}
 		case MotionEvent.ACTION_UP:
 		case MotionEvent.ACTION_POINTER_UP:
 		case MotionEvent.ACTION_CANCEL:

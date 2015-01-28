@@ -20,15 +20,13 @@ public class ClassicActivity extends Activity{
 		Log.d("CA","create");
 	}
 	
-	protected void onStart(){
-		super.onStart();
-		MazeConstants.PLAY=true;
-		Log.d("CA","start");
-	}
-	
-	protected void onDestroy() {
-		super.onDestroy();
-		MazeConstants.PLAY=false;	
-		Log.d("CA","destroy");
+	protected void onPause(){
+		super.onPause();
+		if(MazeConstants.PLAY){
+			drawView.saveStateVariables();
+			//MazeConstants.PLAY=;	
+		}
+		
+		Log.d("CA","pause");
 	}
 }

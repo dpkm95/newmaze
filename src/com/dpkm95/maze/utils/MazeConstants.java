@@ -19,6 +19,7 @@ public class MazeConstants {
 	public final static int STATE_LOSS = 4;
 	public static int COLOR = 4;
 	public static boolean PLAY;
+	public static boolean NO_BLUETOOTH;
 
 
 	public static class PositionUpdates {

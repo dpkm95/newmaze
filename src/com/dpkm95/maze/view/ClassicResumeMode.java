@@ -190,34 +190,35 @@ public class ClassicResumeMode extends View {
 			if (state != MazeConstants.STATE_CRASH)
 				paintPlayer(canvas);
 			break;
-		case MazeConstants.STATE_CRASH:
-			if (MazeConstants.VIBRATION)
-				vibrator.vibrate(pattern_crash, -1);
+		case MazeConstants.STATE_CRASH:			
 			paintLoading(canvas);
 			if (Math.ceil(player.life) != 100) {
-				if (Archiver.get_top_score(root) < player.score)
-					new_high_score=true;
-				if (MazeConstants.VIBRATION)
-					vibrator.vibrate(pattern_win, -1);
+				paintCrash(canvas);
 				if (archive) {					
+					if (Archiver.get_top_score(root) < player.score)
+						new_high_score=true;
+					if (MazeConstants.VIBRATION)
+						vibrator.vibrate(pattern_win, -1);
+					
 					Archiver.save_classic_score(root, player.score);															
 					archive = false;
-				}
-				if (new_high_score) {
-					if (MazeConstants.TONE)
-						mp_highscore.start();
-				} else {
-					if (MazeConstants.TONE)
-						mp_end.start();
-				}
-				paintCrash(canvas);
-				MazeConstants.RESUMABLE = false;
-				new Timer().schedule(new TimerTask() {
-					public void run() {
-						root.finish();
-					}
-				}, 1500);
+					if (new_high_score) {
+						if (MazeConstants.TONE)
+							mp_highscore.start();
+					} else {
+						if (MazeConstants.TONE)
+							mp_end.start();
+					}					
+					MazeConstants.RESUMABLE = false;
+					new Timer().schedule(new TimerTask() {
+						public void run() {
+							root.finish();
+						}
+					}, 1500);
+				}				
 			} else {
+				if (MazeConstants.VIBRATION)
+					vibrator.vibrate(pattern_crash, -1);
 				if (MazeConstants.TONE)
 					mp_bump.start();
 				player.life -= life_number * (100 / (life_number + 1));
@@ -237,17 +238,10 @@ public class ClassicResumeMode extends View {
 
 	public void onWindowFocusChanged(boolean hasFocus) {
 		super.onWindowFocusChanged(hasFocus);
-		if (!hasFocus)
-			try {
-				Stack keys_copy = new Stack();
-				keys_copy.copy(keys);
-				Archiver.save_game_state(m_context, root, maze, player.x,
-						player.y, destX, destY, keys_copy, key_count,
-						player.score, player.life, life_number, teleX, teleY,
-						teleport);
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
+		if (!hasFocus){
+			saveStateVariables();
+			MazeConstants.PLAY=false;
+		}			
 	}
 
 	private void paintMaze(Canvas canvas) {
@@ -310,13 +304,7 @@ public class ClassicResumeMode extends View {
 		canvas.drawText("Life:", mazeXf + (W - mazeXf) / 2
 				- (float) (5.5 * unit), mazeY+16*unit, paint0);
 		canvas.drawText(Integer.toString((int)player.life)+"%", mazeXf + (W - mazeXf) / 2
-				- (float) (5.5 * unit), mazeY+20*unit, paint0);
-		// Teleport location
-		if (teleport) {
-			paint.setColor(Color.GRAY);
-			canvas.drawCircle(mazeX + 5 * unit * teleX + 3 * unit, mazeY + 5
-					* unit * teleY + 3 * unit, unit, paint);
-		}		
+				- (float) (5.5 * unit), mazeY+20*unit, paint0);			
 	}
 
 	// paints line on which pointer is placed
@@ -345,6 +333,12 @@ public class ClassicResumeMode extends View {
 		paint.setColor(Color.rgb(200, 200, 200));
 		canvas.drawCircle(mazeX + 5 * unit * destX + 3 * unit, mazeY + 5 * unit
 				* destY + 3 * unit, unit, paint);
+		// Teleport location
+		if (teleport) {
+			paint.setColor(Color.GRAY);
+			canvas.drawCircle(mazeX + 5 * unit * teleX + 3 * unit, mazeY + 5
+					* unit * teleY + 3 * unit, unit, paint);
+		}
 	}
 
 	// method to paint the remaining keys at end-points
@@ -399,8 +393,7 @@ public class ClassicResumeMode extends View {
 	}
 
 	private void paintLoading(Canvas canvas) {
-		paint.setColor(Color.rgb(0, 162, 232));
-		canvas.drawRect(0, 0, W, H, paint);
+		canvas.drawRect(0, 0, W, H, paint1);
 		paint.setColor(Color.WHITE);
 		paint.setTextSize(5 * unit);
 		paint.setTypeface(Typeface.createFromAsset(root.getAssets(),
@@ -503,7 +496,24 @@ public class ClassicResumeMode extends View {
 				}
 			}
 			break;
-		case MotionEvent.ACTION_MOVE:
+		case MotionEvent.ACTION_MOVE:{
+			if (event.getX() < control_width) {
+				if (H - 3*control_width < event.getY()
+						&& event.getY() < H - 2*control_width) {
+					up.pressed = true;
+				} else if (H - control_width < event.getY() && event.getY() < H) {
+					down.pressed = true;
+				}
+			} else if (event.getY() > H-control_width) {
+				if (W - 3*control_width < event.getX()
+						&& event.getX() < W - 2*control_width) {
+					left.pressed = true;
+				} else if (W - control_width < event.getX() && event.getX() < W) {
+					right.pressed = true;
+				}
+			}
+			break;
+		}
 		case MotionEvent.ACTION_UP:
 		case MotionEvent.ACTION_POINTER_UP:
 		case MotionEvent.ACTION_CANCEL:
@@ -512,5 +522,20 @@ public class ClassicResumeMode extends View {
 		}
 		invalidate();
 		return true;
+	}
+
+	public void saveStateVariables() {
+		Stack keys_copy = new Stack();
+		keys_copy.copy(keys);
+		try {
+			Archiver.save_game_state(m_context, root, maze, player.x,
+					player.y, destX, destY, keys_copy, key_count,
+					player.score, player.life, life_number, teleX, teleY,
+					teleport);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		Log.d("crm","state variables saved");
 	}
 }

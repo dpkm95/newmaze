@@ -163,15 +163,15 @@ public class DuelMode extends View {
 	public void onDraw(Canvas canvas) {
 		switch (mGameState) {
 		case MazeConstants.STATE_PLAY:
+			paintOpponent(canvas);
 			paintMaze(canvas);
 			paintBackground(canvas);
-			paintGameControls(canvas);
-			postOwnPosition();
+			paintGameControls(canvas);			
 			paintDestination(canvas);
-
-			paintOpponent(canvas);
+			
 			paintKeys(canvas);
-			paintPlayer(canvas);
+			paintPlayer(canvas);		
+			postOwnPosition();			
 			break;
 		case MazeConstants.STATE_CRASH:
 			if (MazeConstants.VIBRATION)
@@ -186,9 +186,9 @@ public class DuelMode extends View {
 					mp_win.start();
 				Archiver.save_duel_score(root, player.score-opponent.score);															
 				archive = false;
+				postWinMessage();
 			}
-			paintWinner(canvas);
-			postWinMessage();
+			paintWinner(canvas);			
 			new Timer().schedule(new TimerTask() {
 				public void run() {
 					root.finish();
@@ -214,6 +214,12 @@ public class DuelMode extends View {
 		}
 	}
 
+	public void onWindowFocusChanged(boolean hasFocus) {
+		super.onWindowFocusChanged(hasFocus);
+		if (!hasFocus)
+			postQuitMessage();
+	}
+	
 	private void paintMaze(Canvas canvas) {
 		float px = mazeX, py = mazeY;
 		for (int i = 0; i < y; i++) {
@@ -273,13 +279,7 @@ public class DuelMode extends View {
 		canvas.drawText("Own:"+Integer.toString(player.score), mazeXf + (W - mazeXf) / 2
 				- (float) (5.5 * unit), mazeY+8*unit, paint0);
 		canvas.drawText("Opp:"+Integer.toString(opponent.score), mazeXf + (W - mazeXf) / 2
-				- (float) (5.5 * unit),mazeY+12*unit, paint0);
-		// Teleport location
-		if (teleport) {
-			paint.setColor(Color.GRAY);
-			canvas.drawCircle(mazeX + 5 * unit * teleX + 3 * unit, mazeY + 5
-					* unit * teleY + 3 * unit, unit, paint);
-		}
+				- (float) (5.5 * unit),mazeY+12*unit, paint0);		
 	}
 
 	// paints line on which pointer is placed
@@ -313,12 +313,19 @@ public class DuelMode extends View {
 		paint.setColor(Color.rgb(200, 200, 200));
 		canvas.drawCircle(mazeX + 5 * unit * destX + 3 * unit, mazeY + 5 * unit
 				* destY + 3 * unit, unit, paint);
+		// Teleport location
+		if (teleport) {
+			paint.setColor(Color.GRAY);
+			canvas.drawCircle(mazeX + 5 * unit * teleX + 3 * unit, mazeY + 5
+					* unit * teleY + 3 * unit, unit, paint);
+		}
 	}
 
 	private void paintOpponent(Canvas canvas) {
 		paint.setColor(Color.rgb(255, 168, 111));
 		canvas.drawCircle(mazeX + 5 * unit * opponent.x + 3 * unit, mazeY + 5
 				* unit * opponent.y + 3 * unit, unit, paint);
+		invalidate();
 	}
 
 	// method to paint the remaining keys at end-points
@@ -421,10 +428,11 @@ public class DuelMode extends View {
 	public void updateOpponentPosition(int x,int y){
 		opponent.x = x;
 		opponent.y = y;
-		invalidate();
+		//invalidate();
 	}
 	
 	private void postOwnPosition(){
+		Log.d("dm","posted own pos");
 		Message msg = mHandler.obtainMessage();
 		msg.what = MazeConstants.EVENT_POSITION_UPDATE;
 		Bundle b = new Bundle();
@@ -447,7 +455,7 @@ public class DuelMode extends View {
 		paint.setTextSize(5 * unit);
 		paint.setTypeface(Typeface.createFromAsset(root.getAssets(),
 				"fonts/gisha.ttf"));
-		canvas.drawText("You Lose by"+Integer.toString(opponent.score-player.score)+" keys", (W - 15 * 3 * unit) / 2, H / 2, paint);
+		canvas.drawText("You Lose by "+Integer.toString(opponent.score-player.score)+" keys", (W - 15 * 3 * unit) / 2, H / 2, paint);
 		}
 
 	private void postQuitMessage() {
@@ -514,7 +522,24 @@ public class DuelMode extends View {
 				}
 			}
 			break;
-		case MotionEvent.ACTION_MOVE:
+		case MotionEvent.ACTION_MOVE:{
+			if (event.getX() < control_width) {
+				if (H - 3*control_width < event.getY()
+						&& event.getY() < H - 2*control_width) {
+					up.pressed = true;
+				} else if (H - control_width < event.getY() && event.getY() < H) {
+					down.pressed = true;
+				}
+			} else if (event.getY() > H-control_width) {
+				if (W - 3*control_width < event.getX()
+						&& event.getX() < W - 2*control_width) {
+					left.pressed = true;
+				} else if (W - control_width < event.getX() && event.getX() < W) {
+					right.pressed = true;
+				}
+			}
+			break;
+		}
 		case MotionEvent.ACTION_UP:
 		case MotionEvent.ACTION_POINTER_UP:
 		case MotionEvent.ACTION_CANCEL:
@@ -523,5 +548,9 @@ public class DuelMode extends View {
 		}
 		invalidate();
 		return true;
+	}
+
+	public void finish() {
+		root.finish();		
 	}
 }

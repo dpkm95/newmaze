@@ -1,5 +1,8 @@
 package com.dpkm95.maze.view;
 
+import java.util.Timer;
+import java.util.TimerTask;
+
 import com.dpkm95.maze.activity.ChallengeActivity;
 import com.dpkm95.maze.activity.ClassicActivity;
 import com.dpkm95.maze.activity.ClassicResumeActivity;
@@ -48,7 +51,6 @@ import android.widget.Toast;
 public class LaunchView extends View {
 	private static final int REQUEST_CONNECT_DEVICE = 2;
 	private static final int REQUEST_ENABLE_BT = 3;
-	private BluetoothAdapter mBluetoothAdapter = null;
 
 	private static float classic_ix, classic_iy, classic_fx, classic_fy;
 	private static float challenge_ix, challenge_iy, challenge_fx,
@@ -71,6 +73,7 @@ public class LaunchView extends View {
 	private Paint paint, paint0, paint1, paint2, paint2i, paint3, paint3i;
 	private float H, W;
 	private MainActivity root;
+	private ConnectActivity ca;
 	private Context m_context;
 	private int selection = 1,touch_down_widget;
 	private Bitmap classic, challenge, duel, achievements, instructions,
@@ -86,6 +89,7 @@ public class LaunchView extends View {
 		super(m_context);
 		this.m_context = m_context;
 		root = (MainActivity) m_context;
+		ca = new ConnectActivity();
 		Archiver.load_game_constants(root);
 
 		W = width;
@@ -453,15 +457,15 @@ public class LaunchView extends View {
 		case 3:
 			paint1.setTextSize(5 * unit);
 			paint2.setTextSize(5 * unit);
-			if (bluetooth_pressed) {
+			if (root.mBluetoothAdapter.isEnabled()) {
 				canvas.drawRect(hot_b1_ix+unit, hot_b1_iy+unit, hot_b1_fx-unit, hot_b1_fy-unit,
 						paint2);
 			}
-			if (discoverable_pressed) {
+			if (root.mBluetoothAdapter.getScanMode()==root.mBluetoothAdapter.SCAN_MODE_CONNECTABLE_DISCOVERABLE) {
 				canvas.drawRect(hot_b2_ix+unit, hot_b2_iy+unit, hot_b2_fx-unit, hot_b2_fy-unit,
 						paint2);
 			}
-			if (search_pressed) {
+			if (root.mBluetoothAdapter.isEnabled()) {
 				canvas.drawRect(hot_b3_ix+unit, hot_b3_iy+unit, hot_b3_fx-unit, hot_b3_fy-unit,
 						paint2);
 			}
@@ -470,20 +474,29 @@ public class LaunchView extends View {
 			canvas.drawBitmap(discoverable, hot_b2_ix, hot_b2_iy, paint3i);
 			canvas.drawBitmap(search, hot_b3_ix, hot_b3_iy, paint3i);
 
-			if (duel_pressed) {
-				canvas.drawRect(hot_b1_ix, hot_b1_fy + unit, W - unit,
-						H - unit, paint2);
-				canvas.drawText("  Start", hot_b1_ix
-						+ (W - 4 * unit - 2 * sel_w) / 2 - 3 * unit * 3,
-						hot_b1_fy + 3 * unit + (H - 5 * unit - hot_w / 2) / 2,
-						paint1);
-			} else {
+			if(root.mBluetoothAdapter.isEnabled()){
+				if (duel_pressed) {
+					canvas.drawRect(hot_b1_ix, hot_b1_fy + unit, W - unit,
+							H - unit, paint2);
+					canvas.drawText("  Start", hot_b1_ix
+							+ (W - 4 * unit - 2 * sel_w) / 2 - 3 * unit * 3,
+							hot_b1_fy + 3 * unit + (H - 5 * unit - hot_w / 2) / 2,
+							paint1);
+				} else {
+					canvas.drawRect(hot_b1_ix, hot_b1_fy + unit, W - unit,
+							H - unit, paint3);
+					canvas.drawText("  Start", hot_b1_ix
+							+ (W - 4 * unit - 2 * sel_w) / 2 - 3 * unit * 3,
+							hot_b1_fy + 3 * unit + (H - 5 * unit - hot_w / 2) / 2,
+							paint2);
+				}
+			}else{
 				canvas.drawRect(hot_b1_ix, hot_b1_fy + unit, W - unit,
 						H - unit, paint3);
 				canvas.drawText("  Start", hot_b1_ix
 						+ (W - 4 * unit - 2 * sel_w) / 2 - 3 * unit * 3,
 						hot_b1_fy + 3 * unit + (H - 5 * unit - hot_w / 2) / 2,
-						paint2);
+						paint1);
 			}
 
 			break;
@@ -842,19 +855,20 @@ public class LaunchView extends View {
 			case 3:
 				if (hot_b1_ix < event.getX() && event.getX() < hot_b1_fx
 						&& hot_b1_iy < event.getY() && event.getY() < hot_b1_fy)
-					//bluetooth_pressed = true;
+					bluetooth_pressed = true;
 				if (hot_b2_ix < event.getX() && event.getX() < hot_b2_fx
 						&& hot_b2_iy < event.getY() && event.getY() < hot_b2_fy
-						&& bluetooth_pressed)
-					//discoverable_pressed = true;
+						&& root.mBluetoothAdapter.isEnabled())
+					discoverable_pressed = true;				
 				if (hot_b3_ix < event.getX() && event.getX() < hot_b3_fx
 						&& hot_b3_iy < event.getY() && event.getY() < hot_b3_fy
-						&& discoverable_pressed)
-					//search_pressed = true;
+						&& root.mBluetoothAdapter.isEnabled())
+					search_pressed = true;
 				if (hot_b1_ix < event.getX() && event.getX() < W - unit
 						&& hot_b1_fy + unit < event.getY()
-						&& event.getY() < H - unit && search_pressed){
-					//duel_pressed = true;
+						&& event.getY() < H - unit 
+						&& root.mBluetoothAdapter.isEnabled()){
+					duel_pressed = true;
 					touch_down_widget = 1;
 				}					
 				break;
@@ -981,71 +995,42 @@ public class LaunchView extends View {
 					root.startActivity(i);
 				}
 				break;
-			case 3:
-				
-				mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-
-				// If the adapter is null, then Bluetooth is not supported
-				if (mBluetoothAdapter == null)
+			case 3:				
+				if(MazeConstants.NO_BLUETOOTH){
 					Toast.makeText(root, "Bluetooth is not available",
 							Toast.LENGTH_LONG).show();
-				else {
-
-				}
-				Intent i = new Intent(m_context, ConnectActivity.class);
-				root.startActivity(i);
-
-				if (hot_b1_ix < event.getX() && event.getX() < hot_b1_fx
-						&& hot_b1_iy < event.getY() && event.getY() < hot_b1_fy
-						&& bluetooth_pressed) {
-					// code to enable bluetooth
-					if (!mBluetoothAdapter.isEnabled()) {
-						Intent enableIntent = new Intent(
-								BluetoothAdapter.ACTION_REQUEST_ENABLE);
-						root.startActivityForResult(enableIntent,
-								REQUEST_ENABLE_BT);
-						// Otherwise, setup the chat session
-					} else {
-						
-//						 if (ConnectActivity.mChatService == null) //
-//						 setupChat(); ConnectActivity.mChatService = new
-//						 BluetoothChatService(root, ConnectActivity.mHandler);
-						 
+				}else{
+					if (hot_b1_ix < event.getX() && event.getX() < hot_b1_fx
+							&& hot_b1_iy < event.getY() && event.getY() < hot_b1_fy
+							&& bluetooth_pressed) {
+						if(!root.mBluetoothAdapter.isEnabled())
+							root.enableBluetooth();
+						else
+							root.mBluetoothAdapter.disable();
+					}
+					
+					if (hot_b2_ix < event.getX() && event.getX() < hot_b2_fx
+							&& hot_b2_iy < event.getY() && event.getY() < hot_b2_fy
+							&& root.mBluetoothAdapter.isEnabled() 
+							&& discoverable_pressed
+							&& root.mBluetoothAdapter.getScanMode()!=root.mBluetoothAdapter.SCAN_MODE_CONNECTABLE_DISCOVERABLE) {
+						root.ensureDiscoverable();						
+					}
+					if (hot_b3_ix < event.getX() && event.getX() < hot_b3_fx
+							&& hot_b3_iy < event.getY() && event.getY() < hot_b3_fy
+							&& root.mBluetoothAdapter.isEnabled() 
+							&& search_pressed) {
+						root.requestConnectDevice();
+					}
+					if (hot_b1_ix < event.getX() && event.getX() < W - unit
+							&& hot_b1_fy + unit < event.getY()
+							&& event.getY() < H - unit 
+							&& root.mBluetoothAdapter.isEnabled()
+							&& duel_pressed) {
+						Intent i = new Intent(m_context, ConnectActivity.class);
+						root.startActivity(i);
 					}
 				}
-				if (hot_b2_ix < event.getX() && event.getX() < hot_b2_fx
-						&& hot_b2_iy < event.getY() && event.getY() < hot_b2_fy
-						&& bluetooth_pressed && discoverable_pressed) {
-					// code to make device discoverable
-					if (mBluetoothAdapter.getScanMode() != BluetoothAdapter.SCAN_MODE_CONNECTABLE_DISCOVERABLE) {
-						Intent discoverableIntent = new Intent(
-								BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE);
-						discoverableIntent.putExtra(
-								BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION,
-								300);
-						root.startActivity(discoverableIntent);
-					}
-				}
-				if (hot_b3_ix < event.getX() && event.getX() < hot_b3_fx
-						&& hot_b3_iy < event.getY() && event.getY() < hot_b3_fy
-						&& bluetooth_pressed && search_pressed) {
-					// code to switch to another listview screen to choose
-					// opponent
-					Intent serverIntent = new Intent(root,
-							DeviceListActivity.class);
-					root.startActivityForResult(serverIntent,
-							REQUEST_CONNECT_DEVICE);
-				}
-				if (hot_b1_ix < event.getX() && event.getX() < W - unit
-						&& hot_b1_fy + unit < event.getY()
-						&& event.getY() < H - unit && bluetooth_pressed
-						&& duel_pressed) {
-					Intent serverIntent = new Intent(root,
-							ConnectActivity.class);
-					root.startActivityForResult(serverIntent,
-							REQUEST_CONNECT_DEVICE);
-				}
-				
 				break;
 			case 4:
 				break;
@@ -1135,7 +1120,6 @@ public class LaunchView extends View {
 			}
 			if (selection != 3) {
 				bluetooth_pressed = false;
-				discoverable_pressed = false;
 				search_pressed = false;
 			}
 			break;

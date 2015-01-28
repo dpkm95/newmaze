@@ -72,12 +72,12 @@ public class ConnectActivity extends Activity {
 	public void generateOwnMaze() {
 		MazeGenerator mg;
 		if (MazeConstants.SIZE) {
-			mg = new MazeGenerator(16,10);
+		mg = new MazeGenerator(16,10);
 		} else {
-			mg = new MazeGenerator(12,8);
-		}		 
+		mg = new MazeGenerator(12,8);
+		}
 		mOwnMaze = mg.getMaze();
-	}
+		}
 
 	@Override
 	public void onStart() {
@@ -145,7 +145,7 @@ public class ConnectActivity extends Activity {
 			Log.e(TAG, "-- ON STOP --");
 	}
 
-	private void ensureDiscoverable() {
+	public void ensureDiscoverable() {
 		if (D)
 			Log.d(TAG, "ensure discoverable");
 		if (mBluetoothAdapter.getScanMode() != BluetoothAdapter.SCAN_MODE_CONNECTABLE_DISCOVERABLE) {
@@ -308,6 +308,11 @@ public class ConnectActivity extends Activity {
 		return true;
 	}
 
+	public void enableBluetooth(){
+		Intent serverIntent = new Intent(this, DeviceListActivity.class);
+		startActivityForResult(serverIntent, REQUEST_CONNECT_DEVICE);		
+	}
+	
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 		Intent serverIntent = null;

@@ -213,8 +213,8 @@ public class Archiver {
 		for (int i = 1; i < 6; ++i) {
 			score_card += Integer.toString(temp[i]) + ",";
 		}
-		score_card+=Integer.toString(Integer.parseInt(score_list.get(5)+1))
-				+","+Integer.toString(Integer.parseInt(score_list.get(6)+1));
+		score_card+=Integer.toString(Integer.parseInt(score_list.get(5))+1)
+				+","+Integer.toString(Integer.parseInt(score_list.get(6))+1);
 		
 		try {
 			FileOutputStream fOut = root.openFileOutput(

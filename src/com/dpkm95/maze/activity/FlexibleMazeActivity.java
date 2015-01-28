@@ -52,7 +52,7 @@ public class FlexibleMazeActivity extends Activity {
 	private String mConnectedDeviceName = null;
 	// Member object for the chat services
 	private BluetoothChatService mChatService = null;
-	boolean eventCommunicated = false;
+	//boolean eventCommunicated = false;
 	@SuppressLint("HandlerLeak")
 	Handler btHandler = new Handler() {
 		@Override
@@ -124,7 +124,7 @@ public class FlexibleMazeActivity extends Activity {
 				onOwnPositionUpdate(x, y);
 				break;
 			case MazeConstants.QUIT_MAZE:
-				onBackPressed();
+				mDrawView.finish();
 				break;
 			}
 		}	
@@ -165,6 +165,7 @@ public class FlexibleMazeActivity extends Activity {
 	public void decodeMessage(String message) {
 		String[] parts = message.split(":");
 		try {// TODO TECHNICAL DEBT! ENSURE NON-NUMBERS ARE NOT SENT!
+			Log.d("FMA-dm", message);
 			int what = Integer.parseInt(parts[0]);
 			switch (what) {
 			case MazeConstants.EVENT_WIN:
@@ -208,20 +209,15 @@ public class FlexibleMazeActivity extends Activity {
 	// In case you win he is informed by the onWin() function
 
 	public void onOpponentWin() {
-		eventCommunicated = true;// not necessary as STATE_LOSS has no callback
-									// mechanism
 		mDrawView.setGameState(MazeConstants.STATE_LOSS);
 	}	
 
 	public void onWin() {
-		if (!eventCommunicated) {
-			eventCommunicated = true;
-			sendMessage("" + MazeConstants.EVENT_WIN);
-		}
+		sendMessage(""+MazeConstants.EVENT_WIN);
 	}
 
 	public void onOwnPositionUpdate(int x, int y) {
-		sendMessage(MazeConstants.EVENT_POSITION_UPDATE + ":" + x + ":" + y);
+		sendMessage(MazeConstants.EVENT_POSITION_UPDATE + ":" + x + ":" + y + ":");
 		//Log.d(TAG, "onOwnPosUpdate " + x + ":" + y);
 	}
 	
